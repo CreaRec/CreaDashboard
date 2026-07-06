@@ -3,7 +3,7 @@ import { createLogger } from '../lib/logger';
 import { ensureAppTimeZone } from '../lib/timezone';
 import * as activities from './activities';
 import { TEMPORAL_ADDRESS, TEMPORAL_NAMESPACE, TEMPORAL_TASK_QUEUE } from './config';
-import { ensureSmtSyncSchedule, ensureWaterSyncSchedule } from './schedules';
+import { ensureSmtSyncSchedule, ensureWaterSyncSchedule, ensureAtmosSyncSchedule } from './schedules';
 import { getTemporalClient } from './client';
 
 ensureAppTimeZone();
@@ -46,6 +46,7 @@ async function runWorker(): Promise<void> {
   const client = await getTemporalClient();
   await ensureSmtSyncSchedule(client);
   await ensureWaterSyncSchedule(client);
+  await ensureAtmosSyncSchedule(client);
 
   log.info('Temporal worker started', {
     address: TEMPORAL_ADDRESS,

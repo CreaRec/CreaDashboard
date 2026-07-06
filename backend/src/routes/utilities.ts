@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
 import { isSmtConfigured } from '../services/smartMeterTexas/types';
 import { isWaterSmartConfigured } from '../services/waterSmart/types';
+import { isAtmosConfigured } from '../services/atmosEnergy/types';
 import { formatUtilityMonth } from '../services/smartMeterTexas/transform';
 
 const router = Router();
@@ -15,7 +16,7 @@ const utilityMeta: Record<
 > = {
   electricity: { label: 'Электричество', unit: 'kWh', currency: 'USD' },
   water: { label: 'Вода', unit: 'gal', currency: 'USD' },
-  gas: { label: 'Газ', unit: 'м³', currency: 'RUB' },
+  gas: { label: 'Газ', unit: 'CCF', currency: 'USD' },
 };
 
 router.get('/', async (_req, res) => {
@@ -54,7 +55,9 @@ router.get('/', async (_req, res) => {
             ? isSmtConfigured()
             : type === UtilityType.water
               ? isWaterSmartConfigured()
-              : false,
+              : type === UtilityType.gas
+                ? isAtmosConfigured()
+                : false,
         currentConsumption: latest?.consumption ?? 0,
         currentCost: latest?.cost ?? 0,
         readings: typeReadings.map((r) => ({

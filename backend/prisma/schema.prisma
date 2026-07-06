@@ -14,7 +14,8 @@ enum WidgetId {
   waterMonthly
   waterBills
   waterDaily
-  gas
+  gasMonthly
+  gasBills
   calendar
   reminders
   notes
@@ -84,6 +85,14 @@ model WaterDailyReading {
 }
 
 model WaterSyncLog {
+  id           String        @id @default(cuid())
+  status       SmtSyncStatus
+  syncedAt     DateTime      @default(now())
+  error        String?
+  recordsCount Int           @default(0)
+}
+
+model GasSyncLog {
   id           String        @id @default(cuid())
   status       SmtSyncStatus
   syncedAt     DateTime      @default(now())

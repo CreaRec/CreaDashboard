@@ -7,7 +7,8 @@ export type WidgetId =
   | 'waterMonthly'
   | 'waterBills'
   | 'waterDaily'
-  | 'gas'
+  | 'gasMonthly'
+  | 'gasBills'
   | 'calendar'
   | 'reminders'
   | 'notes';
@@ -109,6 +110,38 @@ export interface WaterSmartStatus {
   recordsCount: number;
 }
 
+export interface GasBillPoint {
+  month: string;
+  amount: number;
+}
+
+export interface GasBillsData {
+  connected: boolean;
+  label: string;
+  currency: string;
+  currentAmount: number;
+  readings: GasBillPoint[];
+}
+
+export interface GasMonthlyData {
+  connected: boolean;
+  label: string;
+  unit: string;
+  currency: string;
+  currentConsumption: number;
+  currentCost: number;
+  estimatedCost: boolean;
+  readings: UtilityReading[];
+}
+
+export interface AtmosStatus {
+  configured: boolean;
+  lastSync: string | null;
+  lastStatus: string | null;
+  lastError: string | null;
+  recordsCount: number;
+}
+
 export interface SmtStatus {
   configured: boolean;
   lastSync: string | null;
@@ -150,7 +183,8 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   waterMonthly: 'Вода (месяц)',
   waterBills: 'Вода (счет)',
   waterDaily: 'Вода (день)',
-  gas: 'Газ',
+  gasMonthly: 'Газ (месяц)',
+  gasBills: 'Газ (счет)',
   calendar: 'Календарь',
   reminders: 'Напоминания',
   notes: 'Заметки',

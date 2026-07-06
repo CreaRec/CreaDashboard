@@ -8,7 +8,9 @@ import notesRouter from './routes/notes';
 import layoutRouter from './routes/layout';
 import smtIntegrationRouter from './routes/integrations/smt';
 import watersmartIntegrationRouter from './routes/integrations/watersmart';
+import atmosIntegrationRouter from './routes/integrations/atmos';
 import waterRouter from './routes/water';
+import gasRouter from './routes/gas';
 import eventsRouter from './routes/events';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
@@ -46,7 +48,9 @@ app.use('/api/notes', notesRouter);
 app.use('/api/layout', layoutRouter);
 app.use('/api/integrations/smt', smtIntegrationRouter);
 app.use('/api/integrations/watersmart', watersmartIntegrationRouter);
+app.use('/api/integrations/atmos', atmosIntegrationRouter);
 app.use('/api/water', waterRouter);
+app.use('/api/gas', gasRouter);
 app.use('/api/events', eventsRouter);
 
 const server = app.listen(PORT, () => {

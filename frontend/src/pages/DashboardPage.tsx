@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import Header from '../components/Layout/Header';
 import DashboardGrid from '../components/Layout/DashboardGrid';
-import UtilityCard from '../components/utilities/UtilityCard';
+import GasMonthlyCard from '../components/utilities/GasMonthlyCard';
+import GasBillsCard from '../components/utilities/GasBillsCard';
 import WaterMonthlyCard from '../components/utilities/WaterMonthlyCard';
 import WaterBillsCard from '../components/utilities/WaterBillsCard';
 import WaterDailyCard from '../components/utilities/WaterDailyCard';
@@ -24,6 +25,8 @@ export default function DashboardPage() {
     waterMonthly,
     waterBills,
     waterDaily,
+    gasMonthly,
+    gasBills,
     calendar,
     reminders,
     notes,
@@ -42,7 +45,7 @@ export default function DashboardPage() {
   } = useWidgetLayout();
 
   const widgets = useMemo(() => {
-    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily) {
+    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily || !gasMonthly || !gasBills) {
       return null;
     }
 
@@ -55,7 +58,8 @@ export default function DashboardPage() {
       waterMonthly: <WaterMonthlyCard data={waterMonthly} />,
       waterBills: <WaterBillsCard data={waterBills} />,
       waterDaily: <WaterDailyCard data={waterDaily} />,
-      gas: <UtilityCard data={utilities.gas} />,
+      gasMonthly: <GasMonthlyCard data={gasMonthly} />,
+      gasBills: <GasBillsCard data={gasBills} />,
       calendar: <CalendarWidget events={calendar} />,
       reminders: <RemindersList reminders={reminders} />,
       notes: <NotesPanel notes={notes} />,
@@ -70,6 +74,8 @@ export default function DashboardPage() {
     waterMonthly,
     waterBills,
     waterDaily,
+    gasMonthly,
+    gasBills,
     calendar,
     reminders,
     notes,

@@ -9,6 +9,12 @@ export {
 } from './smtSyncActivities';
 
 export {
+  checkAtmosConfigured,
+  syncGasReadings,
+  logAtmosSyncResult,
+} from './atmosSyncActivities';
+
+export {
   checkWaterSmartConfigured,
   resolveWaterAccount,
   syncWaterReadings,
