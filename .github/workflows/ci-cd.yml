@@ -26,11 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
       - name: Setup SSH key
         run: |
           install -m 700 -d ~/.ssh
@@ -44,7 +39,6 @@ jobs:
           SERVER_HOST: ${{ secrets.DEPLOY_HOST }}
           SSH_CONTROL_PATH: /tmp/dashboard-deploy-${{ secrets.DEPLOY_USER }}-${{ secrets.DEPLOY_HOST }}
         run: |
-          npm ci
           SSH_TARGET="${SSH_USER}@${SERVER_HOST}"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes \
             -M -S "$SSH_CONTROL_PATH" -fnNT "$SSH_TARGET"

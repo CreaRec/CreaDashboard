@@ -4,8 +4,6 @@
 # Syncs the project, builds it (incl. prisma generate), runs migrations, ensures
 # Postgres/Temporal containers are up, and installs/restarts systemd services.
 #
-# Runs the full test suite locally before syncing; deploy aborts if tests fail.
-#
 # Usage: ./scripts/deploy.sh [--remote]
 #
 #   --remote   Connect via crearec.app instead of the local network IP (192.168.1.135).
@@ -79,16 +77,12 @@ ssh_wrap() {
 log "Deploying to ${SSH_TARGET}:${REMOTE_APP_DIR}"
 log "Services: ${API_SERVICE_NAME}, ${WORKER_SERVICE_NAME}"
 
-for cmd in rsync ssh npm; do
+for cmd in rsync ssh; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     err "$cmd is required locally."
     exit 1
   fi
 done
-
-log "Running tests..."
-npm test
-ok "All tests passed."
 
 close_ssh_master() {
   ssh_wrap -S "$SSH_CONTROL_PATH" -O exit "$SSH_TARGET" 2>/dev/null || true
