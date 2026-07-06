@@ -61,15 +61,15 @@ describe('logger', () => {
     expect(console.error).toHaveBeenCalledOnce();
   });
 
-  it('includes query logging for prisma at debug level', () => {
+  it('includes warn and error logging for prisma below error level', () => {
     process.env.LOG_LEVEL = 'debug';
 
-    expect(getPrismaLogLevels()).toEqual(['query', 'warn', 'error']);
+    expect(getPrismaLogLevels()).toEqual(['warn', 'error']);
   });
 
-  it('omits query logging for prisma above debug level', () => {
-    process.env.LOG_LEVEL = 'info';
+  it('logs only errors for prisma at error level', () => {
+    process.env.LOG_LEVEL = 'error';
 
-    expect(getPrismaLogLevels()).toEqual(['warn', 'error']);
+    expect(getPrismaLogLevels()).toEqual(['error']);
   });
 });

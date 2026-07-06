@@ -9,10 +9,13 @@ import {
 } from '../../mocks/smtResponses';
 import {
   estimateCost,
+  formatMonthLabel,
   parseIntervalResponse,
   parseMetersResponse,
   parseMonthlyResponse,
+  parseMonthKey,
   parseOdrResponse,
+  sortMonthlyReadings,
 } from './transform';
 
 describe('transform', () => {
@@ -26,7 +29,7 @@ describe('transform', () => {
   it('parses monthly response', () => {
     const monthly = parseMonthlyResponse(monthlyResponse);
     expect(monthly).toHaveLength(6);
-    expect(monthly[0].month).toBe('Jan');
+    expect(monthly[0].month).toBe('2026-01');
     expect(monthly[0].consumption).toBe(298);
   });
 
@@ -35,7 +38,7 @@ describe('transform', () => {
       monthlyData: [{ date: '02/01/2026', reading: 298 }],
     });
     expect(monthly).toHaveLength(1);
-    expect(monthly[0].month).toBe('Feb');
+    expect(monthly[0].month).toBe('2026-02');
     expect(monthly[0].consumption).toBe(298);
   });
 
@@ -76,6 +79,26 @@ describe('transform', () => {
   it('estimates cost from kWh rate', () => {
     expect(estimateCost(100, 0.12)).toBe(12);
     expect(estimateCost(100)).toBe(0);
+  });
+
+  it('sorts monthly readings chronologically', () => {
+    const sorted = sortMonthlyReadings([
+      { month: 'Apr', consumption: 1 },
+      { month: '2026-07', consumption: 2 },
+      { month: 'Jan', consumption: 3 },
+    ]);
+
+    expect(sorted.map((reading) => reading.month)).toEqual(['Jan', 'Apr', '2026-07']);
+  });
+
+  it('formats month keys for chart labels', () => {
+    expect(formatMonthLabel('2026-04')).toBe('Apr');
+    expect(formatMonthLabel('Apr')).toBe('Apr');
+  });
+
+  it('parses month keys from slash and ISO dates', () => {
+    expect(parseMonthKey('04/30/2026')).toBe('2026-04');
+    expect(parseMonthKey('2026-07-04')).toBe('2026-07');
   });
 
   it('ignores auth response shape without throwing', () => {

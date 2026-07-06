@@ -5,8 +5,10 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "LOG_LEVEL=debug tsx watch --env-file=.env src/index.ts",
+    "dev:worker": "LOG_LEVEL=debug tsx watch --env-file=.env src/temporal/worker.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
+    "start:worker": "node dist/temporal/worker.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
@@ -15,14 +17,21 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@temporalio/activity": "^1.19.0",
+    "@temporalio/client": "^1.19.0",
+    "@temporalio/worker": "^1.19.0",
+    "@temporalio/workflow": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "@temporalio/testing": "^1.19.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
+    "@types/supertest": "^7.2.0",
     "prisma": "^6.19.3",
+    "supertest": "^7.2.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vitest": "^3.2.6"

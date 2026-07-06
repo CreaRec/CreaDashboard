@@ -56,14 +56,10 @@ export function createLogger(module: string): Logger {
 
 export const logger = createLogger('app');
 
-export function getPrismaLogLevels(): Array<'query' | 'warn' | 'error'> {
-  if (resolveLogLevel() === 'debug') {
-    return ['query', 'warn', 'error'];
+export function getPrismaLogLevels(): Array<'warn' | 'error'> {
+  if (resolveLogLevel() === 'error') {
+    return ['error'];
   }
 
-  if (resolveLogLevel() === 'info') {
-    return ['warn', 'error'];
-  }
-
-  return ['error'];
+  return ['warn', 'error'];
 }

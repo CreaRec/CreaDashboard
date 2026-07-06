@@ -116,13 +116,24 @@ function canUseProjectDatabase() {
   }
 }
 
-function startPostgres(dockerBinary) {
-  try {
-    run(`${dockerBinary} compose up -d postgres --wait`);
-  } catch {
-    run(`${dockerBinary} compose up -d postgres`);
-    waitForPostgres(dockerBinary);
+function waitForTemporal(maxAttempts = 60) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (canRun('nc -z localhost 7233')) {
+      log('Temporal is ready on localhost:7233');
+      return;
+    }
+
+    log(`Waiting for Temporal... (${attempt}/${maxAttempts})`);
+    execSync('sleep 2', { stdio: 'ignore' });
   }
+
+  throw new Error('Temporal did not become ready in time');
+}
+
+function startDockerServices(dockerBinary) {
+  run(`${dockerBinary} compose up -d postgres temporal temporal-ui`);
+  waitForPostgres(dockerBinary);
+  waitForTemporal();
 }
 
 function ensureDevLauncherExtension() {
@@ -135,11 +146,22 @@ function ensureDevLauncherExtension() {
     path.join(process.env.HOME, '.vscode', 'extensions'),
   ];
 
-  const targetName = `${DEV_LAUNCHER_EXTENSION_ID}-0.1.0`;
+  const targetName = `${DEV_LAUNCHER_EXTENSION_ID}-0.2.0`;
+  const legacyTargetName = `${DEV_LAUNCHER_EXTENSION_ID}-0.1.0`;
   let linked = false;
 
   for (const extensionsDir of extensionTargets) {
     const linkPath = path.join(extensionsDir, targetName);
+    const legacyLinkPath = path.join(extensionsDir, legacyTargetName);
+
+    if (fs.existsSync(legacyLinkPath) && !fs.existsSync(linkPath)) {
+      try {
+        fs.unlinkSync(legacyLinkPath);
+        log('Removed legacy dev launcher extension link');
+      } catch {
+        // Ignore stale link cleanup errors.
+      }
+    }
 
     if (fs.existsSync(linkPath)) {
       linked = true;
@@ -170,7 +192,8 @@ function failWithInstructions(reason) {
       '  3. Run: npm run setup\n' +
       '\n' +
       'If port 5432 is used by another PostgreSQL, this project uses port 5434.\n' +
-      'Check backend/.env: DATABASE_URL should point to localhost:5434\n'
+      'Check backend/.env: DATABASE_URL should point to localhost:5434\n' +
+      'Temporal gRPC should be available on localhost:7233\n'
   );
   process.exit(1);
 }
@@ -183,7 +206,7 @@ function main() {
   const dockerBinary = resolveDockerBinary();
 
   if (dockerBinary) {
-    startPostgres(dockerBinary);
+    startDockerServices(dockerBinary);
   } else if (canUseProjectDatabase()) {
     log('Docker unavailable, using existing PostgreSQL from DATABASE_URL');
   } else {

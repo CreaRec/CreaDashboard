@@ -1,33 +1,25 @@
+import { prisma } from '../../lib/prisma';
 import { createLogger } from '../../lib/logger';
 
 const log = createLogger('smt-odr-rate-limit');
-const ODR_MIN_INTERVAL_MS = 60 * 60 * 1000;
+export const ODR_MIN_INTERVAL_MS = 60 * 60 * 1000;
 
-let lastOdrSyncAt = 0;
+export async function canRunOdrSync(esiid: string, now = Date.now()): Promise<boolean> {
+  const snapshot = await prisma.electricityMeterSnapshot.findUnique({
+    where: { esiid },
+  });
 
-export function canRunOdrSync(now = Date.now()): boolean {
-  if (lastOdrSyncAt === 0) {
-    log.debug('ODR sync allowed: no previous sync');
+  if (!snapshot?.readAt) {
+    log.debug('ODR sync allowed: no previous snapshot', { esiid });
     return true;
   }
 
-  const allowed = now - lastOdrSyncAt >= ODR_MIN_INTERVAL_MS;
+  const minutesSinceLastSync = Math.floor((now - snapshot.readAt.getTime()) / 60_000);
+  const allowed = now - snapshot.readAt.getTime() >= ODR_MIN_INTERVAL_MS;
   log.debug('ODR sync rate-limit check', {
+    esiid,
     allowed,
-    minutesSinceLastSync: Math.floor((now - lastOdrSyncAt) / 60_000),
+    minutesSinceLastSync,
   });
   return allowed;
-}
-
-export function markOdrSync(now = Date.now()): void {
-  lastOdrSyncAt = now;
-  log.debug('ODR sync marked', { at: new Date(now).toISOString() });
-}
-
-export function resetOdrSyncState(): void {
-  lastOdrSyncAt = 0;
-}
-
-export function getLastOdrSyncAt(): number {
-  return lastOdrSyncAt;
 }

@@ -9,7 +9,6 @@ import layoutRouter from './routes/layout';
 import smtIntegrationRouter from './routes/integrations/smt';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
-import { startSmtSyncScheduler } from './services/smartMeterTexas/sync';
 
 const log = createLogger('server');
 const app = express();
@@ -42,7 +41,6 @@ app.use('/api/integrations/smt', smtIntegrationRouter);
 
 const server = app.listen(PORT, () => {
   log.info(`Backend running on http://localhost:${PORT} (log level: ${resolveLogLevel()})`);
-  startSmtSyncScheduler();
 });
 
 async function shutdown() {

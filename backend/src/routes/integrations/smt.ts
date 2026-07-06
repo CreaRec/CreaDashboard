@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { createLogger } from '../../lib/logger';
-import { getSmtStatus, runSmtSync } from '../../services/smartMeterTexas/sync';
+import { getSmtStatus } from '../../services/smartMeterTexas/sync';
+import { getTemporalClient } from '../../temporal/client';
+import {
+  SMT_SYNC_WORKFLOW,
+  TEMPORAL_TASK_QUEUE,
+} from '../../temporal/config';
 
 const router = Router();
 const log = createLogger('smt');
@@ -22,12 +27,21 @@ router.post('/sync', async (req, res) => {
   log.debug('POST /sync', { forceOdr });
 
   try {
-    const result = await runSmtSync(forceOdr);
-    log.info('Manual SMT sync finished', { status: result.status, recordsCount: result.recordsCount });
+    const client = await getTemporalClient();
+    const result = await client.workflow.execute(SMT_SYNC_WORKFLOW, {
+      taskQueue: TEMPORAL_TASK_QUEUE,
+      workflowId: `smt-sync-manual-${Date.now()}`,
+      args: [{ forceOdr }],
+    });
+
+    log.info('Manual SMT sync finished', {
+      status: result.status,
+      recordsCount: result.recordsCount,
+    });
     res.json(result);
   } catch (error) {
     log.error('Failed to sync SMT data', error);
-    res.status(500).json({ error: 'Failed to sync SMT data' });
+    res.status(503).json({ error: 'Temporal is unavailable or sync failed to start' });
   }
 });
 

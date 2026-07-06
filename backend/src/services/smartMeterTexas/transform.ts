@@ -16,29 +16,67 @@ function parseConsumption(value: unknown): number {
   return 0;
 }
 
-function parseMonthLabel(dateValue: string): string {
+const MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+export function parseMonthKey(dateValue: string): string {
+  const isoMatch = dateValue.trim().match(/^(\d{4})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}`;
+  }
+
   const parts = dateValue.split('/');
   if (parts.length !== 3) {
     return dateValue;
   }
 
   const month = Number.parseInt(parts[0], 10);
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const year = Number.parseInt(parts[2], 10);
+  if (Number.isNaN(month) || Number.isNaN(year)) {
+    return dateValue;
+  }
 
-  return monthNames[month - 1] ?? dateValue;
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+export function formatMonthLabel(monthKey: string): string {
+  const match = monthKey.match(/^(\d{4})-(\d{2})$/);
+  if (!match) {
+    return monthKey;
+  }
+
+  const month = Number.parseInt(match[2], 10);
+  return MONTH_LABELS[month - 1] ?? monthKey;
+}
+
+export function monthSortKey(month: string): string {
+  const match = month.match(/^(\d{4})-(\d{2})$/);
+  if (match) {
+    return month;
+  }
+
+  const index = MONTH_LABELS.indexOf(month as (typeof MONTH_LABELS)[number]);
+  if (index >= 0) {
+    return `0000-${String(index + 1).padStart(2, '0')}`;
+  }
+
+  return month;
+}
+
+export function sortMonthlyReadings<T extends { month: string }>(readings: T[]): T[] {
+  return [...readings].sort((a, b) => monthSortKey(a.month).localeCompare(monthSortKey(b.month)));
 }
 
 function parseSmtDateParts(dateValue: string): { year: number; month: number; day: number } | null {
@@ -117,14 +155,14 @@ export function parseMonthlyResponse(payload: unknown): SmtMonthlyReading[] {
     if (row.actl_kwh_usg !== undefined || row.enddate !== undefined || row.startdate !== undefined) {
       const date = String(row.enddate ?? row.startdate ?? '');
       return {
-        month: parseMonthLabel(date),
+        month: parseMonthKey(date),
         consumption: parseConsumption(row.actl_kwh_usg ?? row.mtrd_kwh_usg ?? row.blld_kwh_usg),
       };
     }
 
     const date = String(row.date ?? row.month ?? '');
     return {
-      month: parseMonthLabel(date),
+      month: parseMonthKey(date),
       consumption: parseConsumption(row.reading ?? row.consumption ?? row.kwh),
     };
   });

@@ -7,6 +7,7 @@ const path = require('path');
 const {
   getServerMarkerPath,
   isEditorIntegratedTerminal,
+  resolveEditorCliCandidates,
 } = require('./dev-servers-lib');
 
 const root = path.resolve(__dirname, '..');
@@ -47,10 +48,11 @@ function startWithConcurrently() {
     [
       'concurrently',
       '-n',
-      'backend,frontend',
+      'backend,worker,frontend',
       '-c',
-      'blue,green',
+      'blue,magenta,green',
       'npm run dev -w backend',
+      'npm run dev:worker -w backend',
       'npm run dev -w frontend',
     ],
     {
@@ -60,14 +62,30 @@ function startWithConcurrently() {
   );
 }
 
+function triggerExtensionCommand() {
+  for (const cli of resolveEditorCliCandidates()) {
+    try {
+      execFileSync(cli, ['--command', 'crea-dev-launcher.startServers'], {
+        stdio: 'ignore',
+      });
+      return true;
+    } catch {
+      // Try the next editor CLI candidate.
+    }
+  }
+
+  return false;
+}
+
 function wait(ms) {
   execSync(`sleep ${ms / 1000}`);
 }
 
 function printCursorInstructions({ extensionResponded, shortcutTriggered }) {
-  log('Backend и frontend запускаются в отдельных терминалах Cursor.');
-  log('Смотрите панель Terminal внизу → справа в списке вкладок:');
+  log('Backend, worker и frontend запускаются в отдельных терминалах Cursor.');
+  log('Смотрите панель Terminal → вкладки:');
   log('  • dev:backend');
+  log('  • dev:worker');
   log('  • dev:frontend');
 
   if (!extensionResponded && !shortcutTriggered) {
@@ -86,16 +104,20 @@ function main() {
   if (isEditorIntegratedTerminal(process.env)) {
     requestServersInCursor();
     const shortcutTriggered = triggerBuildTaskShortcut();
-    wait(1500);
+    const commandTriggered = triggerExtensionCommand();
+    wait(2000);
 
     const markerPath = getServerMarkerPath(root);
     const extensionResponded = !fs.existsSync(markerPath);
 
-    printCursorInstructions({ extensionResponded, shortcutTriggered });
+    printCursorInstructions({
+      extensionResponded: extensionResponded || commandTriggered,
+      shortcutTriggered,
+    });
     return;
   }
 
-  log('Запуск вне Cursor — backend и frontend в одном терминале.');
+  log('Запуск вне Cursor — backend, worker и frontend в одном терминале.');
   startWithConcurrently();
 }
 

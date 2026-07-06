@@ -22,7 +22,7 @@
     },
     {
       "label": "dev:servers",
-      "dependsOn": ["dev:backend", "dev:frontend"],
+      "dependsOn": ["dev:backend", "dev:worker", "dev:frontend"],
       "dependsOrder": "parallel",
       "group": {
         "kind": "build",
@@ -60,7 +60,36 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "close": false
+      }
+    },
+    {
+      "label": "dev:worker",
+      "type": "shell",
+      "command": "npm run dev:worker",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "shell": {
+          "executable": "/bin/zsh",
+          "args": ["-ilc"]
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "crea-dashboard-worker",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Temporal worker starting"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "close": false
       }
     },
     {
@@ -87,7 +116,8 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "close": false
       }
     },
     {
