@@ -6,6 +6,7 @@ import {
   todayLocal,
   yesterdayLocal,
 } from '../../lib/timezone';
+import { isChampionConfigured } from '../../services/championEnergy/types';
 import { createPortalClient } from '../../services/smartMeterTexas/portalClient';
 import { canRunOdrSync } from '../../services/smartMeterTexas/odrRateLimit';
 import { estimateCost } from '../../services/smartMeterTexas/transform';
@@ -43,8 +44,11 @@ export async function syncMonthlyReadings(esiid: string): Promise<number> {
   const monthlyReadings = await client.fetchMonthly(esiid);
   log.debug('Monthly readings fetched', { count: monthlyReadings.length });
 
+  const championProvidesBills = isChampionConfigured();
   let recordsCount = 0;
   for (const reading of monthlyReadings) {
+    const estimatedCost = estimateCost(reading.consumption, config.electricityRatePerKwh);
+
     await prisma.utilityReading.upsert({
       where: {
         utilityType_month: {
@@ -52,15 +56,17 @@ export async function syncMonthlyReadings(esiid: string): Promise<number> {
           month: reading.month,
         },
       },
-      update: {
-        consumption: reading.consumption,
-        cost: estimateCost(reading.consumption, config.electricityRatePerKwh),
-      },
+      update: championProvidesBills
+        ? { consumption: reading.consumption }
+        : {
+            consumption: reading.consumption,
+            cost: estimatedCost,
+          },
       create: {
         utilityType: UtilityType.electricity,
         month: reading.month,
         consumption: reading.consumption,
-        cost: estimateCost(reading.consumption, config.electricityRatePerKwh),
+        cost: championProvidesBills ? 0 : estimatedCost,
       },
     });
     recordsCount += 1;

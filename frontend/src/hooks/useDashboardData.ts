@@ -13,6 +13,7 @@ import {
 } from '../api/electricity';
 import { fetchWaterBills, fetchWaterDaily, fetchWaterMonthly } from '../api/water';
 import { fetchGasBills, fetchGasMonthly } from '../api/gas';
+import { fetchRestrictions } from '../api/restrictions';
 import {
   DASHBOARD_REFRESH_INTERVAL_MS,
   subscribeToDashboardEvents,
@@ -31,6 +32,7 @@ import type {
   WaterMonthlyData,
   GasBillsData,
   GasMonthlyData,
+  RestrictionsData,
 } from '../types';
 
 async function fetchAllDashboardData() {
@@ -48,6 +50,7 @@ async function fetchAllDashboardData() {
     calendarData,
     remindersData,
     notesData,
+    restrictionsData,
   ] = await Promise.all([
     fetchUtilities(),
     fetchElectricityMonthly(),
@@ -62,6 +65,7 @@ async function fetchAllDashboardData() {
     fetchCalendar(),
     fetchReminders(),
     fetchNotes(),
+    fetchRestrictions(),
   ]);
 
   return {
@@ -78,6 +82,7 @@ async function fetchAllDashboardData() {
     calendar: calendarData,
     reminders: remindersData,
     notes: notesData,
+    restrictions: restrictionsData,
   };
 }
 
@@ -95,6 +100,7 @@ export function useDashboardData() {
   const [waterDaily, setWaterDaily] = useState<WaterDailyData | null>(null);
   const [gasMonthly, setGasMonthly] = useState<GasMonthlyData | null>(null);
   const [gasBills, setGasBills] = useState<GasBillsData | null>(null);
+  const [restrictions, setRestrictions] = useState<RestrictionsData | null>(null);
   const [calendar, setCalendar] = useState<CalendarEvent[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -125,6 +131,7 @@ export function useDashboardData() {
           setWaterDaily(data.waterDaily);
           setGasMonthly(data.gasMonthly);
           setGasBills(data.gasBills);
+          setRestrictions(data.restrictions);
           setCalendar(data.calendar);
           setReminders(data.reminders);
           setNotes(data.notes);
@@ -171,6 +178,7 @@ export function useDashboardData() {
     waterDaily,
     gasMonthly,
     gasBills,
+    restrictions,
     calendar,
     reminders,
     notes,

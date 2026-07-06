@@ -10,8 +10,10 @@ import smtIntegrationRouter from './routes/integrations/smt';
 import watersmartIntegrationRouter from './routes/integrations/watersmart';
 import atmosIntegrationRouter from './routes/integrations/atmos';
 import championIntegrationRouter from './routes/integrations/champion';
+import restrictionsIntegrationRouter from './routes/integrations/restrictions';
 import waterRouter from './routes/water';
 import gasRouter from './routes/gas';
+import restrictionsRouter from './routes/restrictions';
 import eventsRouter from './routes/events';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
@@ -51,8 +53,10 @@ app.use('/api/integrations/smt', smtIntegrationRouter);
 app.use('/api/integrations/watersmart', watersmartIntegrationRouter);
 app.use('/api/integrations/atmos', atmosIntegrationRouter);
 app.use('/api/integrations/champion', championIntegrationRouter);
+app.use('/api/integrations/restrictions', restrictionsIntegrationRouter);
 app.use('/api/water', waterRouter);
 app.use('/api/gas', gasRouter);
+app.use('/api/restrictions', restrictionsRouter);
 app.use('/api/events', eventsRouter);
 
 const server = app.listen(PORT, () => {

@@ -20,6 +20,7 @@ enum WidgetId {
   calendar
   reminders
   notes
+  localRestrictions
 }
 
 enum UtilityType {
@@ -131,4 +132,20 @@ model Note {
   content   String
   color     String
   updatedAt DateTime @db.Date
+}
+
+model RestrictionsSnapshot {
+  id              String   @id @default("current")
+  burnBanActive   Boolean
+  burnBanCounty   String
+  waterStage      String
+  waterStageLabel String
+  fetchedAt       DateTime @updatedAt
+}
+
+model RestrictionsSyncLog {
+  id       String        @id @default(cuid())
+  status   SmtSyncStatus
+  syncedAt DateTime      @default(now())
+  error    String?
 }

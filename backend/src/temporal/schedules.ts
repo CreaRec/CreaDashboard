@@ -4,6 +4,8 @@ import { getSmtConfig } from '../services/smartMeterTexas/types';
 import { getWaterSmartConfig } from '../services/waterSmart/types';
 import { getAtmosConfig } from '../services/atmosEnergy/types';
 import { getChampionConfig } from '../services/championEnergy/types';
+import { isOpenAiConfigured } from '../lib/openai/client';
+import { getRestrictionsConfig } from '../services/restrictions/types';
 import {
   ATMOS_SYNC_SCHEDULED_WORKFLOW_ID,
   ATMOS_SYNC_SCHEDULE_ID,
@@ -11,6 +13,9 @@ import {
   CHAMPION_SYNC_SCHEDULED_WORKFLOW_ID,
   CHAMPION_SYNC_SCHEDULE_ID,
   CHAMPION_SYNC_WORKFLOW,
+  RESTRICTIONS_SYNC_SCHEDULED_WORKFLOW_ID,
+  RESTRICTIONS_SYNC_SCHEDULE_ID,
+  RESTRICTIONS_SYNC_WORKFLOW,
   SMT_SYNC_SCHEDULED_WORKFLOW_ID,
   SMT_SYNC_SCHEDULE_ID,
   SMT_SYNC_WORKFLOW,
@@ -241,5 +246,57 @@ export async function ensureChampionSyncSchedule(client?: Client): Promise<void>
       policies: scheduleSpec.policies,
     }));
     log.info('Champion sync schedule updated', { intervalMinutes });
+  }
+}
+
+export async function ensureRestrictionsSyncSchedule(client?: Client): Promise<void> {
+  if (!isOpenAiConfigured()) {
+    log.debug('Restrictions sync schedule not created: OpenAI not configured');
+    return;
+  }
+
+  const { syncIntervalMinutes } = getRestrictionsConfig();
+  const intervalMinutes = Math.max(syncIntervalMinutes, 1);
+  const temporalClient =
+    client ??
+    new Client({
+      connection: await Connection.connect({ address: TEMPORAL_ADDRESS }),
+      namespace: TEMPORAL_NAMESPACE,
+    });
+
+  const scheduleSpec = {
+    scheduleId: RESTRICTIONS_SYNC_SCHEDULE_ID,
+    spec: {
+      intervals: [{ every: `${intervalMinutes} minutes` as `${number} minutes` }],
+    },
+    action: {
+      type: 'startWorkflow' as const,
+      workflowType: RESTRICTIONS_SYNC_WORKFLOW,
+      taskQueue: TEMPORAL_TASK_QUEUE,
+      args: [],
+      workflowId: RESTRICTIONS_SYNC_SCHEDULED_WORKFLOW_ID,
+    },
+    policies: {
+      overlap: ScheduleOverlapPolicy.SKIP,
+      catchupWindow: '1 day' as const,
+    },
+  };
+
+  try {
+    await temporalClient.schedule.create(scheduleSpec);
+    log.info('Restrictions sync schedule created', { intervalMinutes });
+  } catch (error) {
+    if (!isScheduleAlreadyExists(error)) {
+      throw error;
+    }
+
+    const handle = temporalClient.schedule.getHandle(RESTRICTIONS_SYNC_SCHEDULE_ID);
+    await handle.update((previous) => ({
+      ...previous,
+      spec: scheduleSpec.spec,
+      action: scheduleSpec.action,
+      policies: scheduleSpec.policies,
+    }));
+    log.info('Restrictions sync schedule updated', { intervalMinutes });
   }
 }

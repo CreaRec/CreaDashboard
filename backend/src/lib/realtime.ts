@@ -11,6 +11,7 @@ let lastSeenSmtSyncedAt: Date | null = null;
 let lastSeenWaterSyncedAt: Date | null = null;
 let lastSeenGasSyncedAt: Date | null = null;
 let lastSeenChampionSyncedAt: Date | null = null;
+let lastSeenRestrictionsSyncedAt: Date | null = null;
 let syncWatcherStarted = false;
 
 export function subscribeDashboardEvents(listener: DashboardEventListener): () => void {
@@ -32,7 +33,8 @@ export function startSyncWatcher(pollMs = 15_000): void {
 
   setInterval(async () => {
     try {
-      const [latestSmt, latestWater, latestGas, latestChampion] = await Promise.all([
+      const [latestSmt, latestWater, latestGas, latestChampion, latestRestrictions] =
+        await Promise.all([
         prisma.smtSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
           select: { syncedAt: true },
@@ -46,6 +48,10 @@ export function startSyncWatcher(pollMs = 15_000): void {
           select: { syncedAt: true },
         }),
         prisma.championSyncLog.findFirst({
+          orderBy: { syncedAt: 'desc' },
+          select: { syncedAt: true },
+        }),
+        prisma.restrictionsSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
           select: { syncedAt: true },
         }),
@@ -85,6 +91,14 @@ export function startSyncWatcher(pollMs = 15_000): void {
         shouldBroadcast = true;
       }
 
+      if (
+        latestRestrictions &&
+        lastSeenRestrictionsSyncedAt !== null &&
+        latestRestrictions.syncedAt.getTime() !== lastSeenRestrictionsSyncedAt.getTime()
+      ) {
+        shouldBroadcast = true;
+      }
+
       if (shouldBroadcast) {
         log.debug('New utility sync detected, broadcasting dashboard update');
         broadcastDashboardUpdate();
@@ -101,6 +115,9 @@ export function startSyncWatcher(pollMs = 15_000): void {
       }
       if (latestChampion) {
         lastSeenChampionSyncedAt = latestChampion.syncedAt;
+      }
+      if (latestRestrictions) {
+        lastSeenRestrictionsSyncedAt = latestRestrictions.syncedAt;
       }
     } catch (error) {
       log.error('Sync watcher failed', error);

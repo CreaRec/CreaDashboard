@@ -26,3 +26,9 @@ export {
   syncWaterReadings,
   logWaterSyncResult,
 } from './waterSyncActivities';
+
+export {
+  checkRestrictionsConfigured,
+  runRestrictionsSync,
+  logRestrictionsSyncActivityResult,
+} from './restrictionsSyncActivities';

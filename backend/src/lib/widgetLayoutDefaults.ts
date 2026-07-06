@@ -8,6 +8,7 @@ export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   WidgetId.waterDaily,
   WidgetId.gasMonthly,
   WidgetId.gasBills,
+  WidgetId.localRestrictions,
   WidgetId.calendar,
   WidgetId.reminders,
   WidgetId.notes,

@@ -42,6 +42,7 @@ describe('widget layout defaults', () => {
       WidgetId.waterDaily,
       WidgetId.gasMonthly,
       WidgetId.gasBills,
+      WidgetId.localRestrictions,
       WidgetId.calendar,
       WidgetId.reminders,
       WidgetId.notes,

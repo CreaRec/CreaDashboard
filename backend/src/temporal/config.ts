@@ -13,3 +13,6 @@ export const ATMOS_SYNC_SCHEDULED_WORKFLOW_ID = 'atmos-sync-scheduled';
 export const CHAMPION_SYNC_SCHEDULE_ID = 'champion-sync-schedule';
 export const CHAMPION_SYNC_WORKFLOW = 'championSyncWorkflow';
 export const CHAMPION_SYNC_SCHEDULED_WORKFLOW_ID = 'champion-sync-scheduled';
+export const RESTRICTIONS_SYNC_SCHEDULE_ID = 'restrictions-sync-schedule';
+export const RESTRICTIONS_SYNC_WORKFLOW = 'restrictionsSyncWorkflow';
+export const RESTRICTIONS_SYNC_SCHEDULED_WORKFLOW_ID = 'restrictions-sync-scheduled';

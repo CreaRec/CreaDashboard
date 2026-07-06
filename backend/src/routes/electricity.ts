@@ -2,12 +2,8 @@ import { Router } from 'express';
 import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
-import {
-  formatLocalDate,
-  parseLocalDate,
-  todayLocal,
-  yesterdayLocal,
-} from '../lib/timezone';
+import { formatLocalDate, parseLocalDate } from '../lib/timezone';
+import { getIntervalLookupDates } from '../services/smartMeterTexas/intervals';
 import { endOfDay, formatUtilityMonth, startOfDay } from '../services/smartMeterTexas/transform';
 import { getChampionStatus } from '../services/championEnergy/sync';
 import { isChampionConfigured } from '../services/championEnergy/types';
@@ -54,44 +50,45 @@ router.get('/monthly', async (_req, res) => {
   }
 });
 
+async function loadIntervalReadingsForDay(date: Date) {
+  return prisma.electricityIntervalReading.findMany({
+    where: {
+      timestamp: {
+        gte: startOfDay(date),
+        lte: endOfDay(date),
+      },
+    },
+    orderBy: { timestamp: 'asc' },
+  });
+}
+
 router.get('/intervals', async (req, res) => {
   const dateParam = typeof req.query.date === 'string' ? req.query.date : null;
   log.debug('GET /intervals', { date: dateParam ?? 'today' });
 
   try {
-    let date: Date;
     if (dateParam) {
       try {
-        date = parseLocalDate(dateParam);
+        parseLocalDate(dateParam);
       } catch {
         res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
         return;
       }
-    } else {
-      date = todayLocal();
     }
 
-    let readings = await prisma.electricityIntervalReading.findMany({
-      where: {
-        timestamp: {
-          gte: startOfDay(date),
-          lte: endOfDay(date),
-        },
-      },
-      orderBy: { timestamp: 'asc' },
-    });
+    const lookupDates = getIntervalLookupDates(dateParam);
+    let date = lookupDates[0];
+    let readings = await loadIntervalReadingsForDay(date);
 
-    if (!dateParam && readings.length === 0) {
-      date = yesterdayLocal();
-      readings = await prisma.electricityIntervalReading.findMany({
-        where: {
-          timestamp: {
-            gte: startOfDay(date),
-            lte: endOfDay(date),
-          },
-        },
-        orderBy: { timestamp: 'asc' },
-      });
+    if (!dateParam) {
+      for (const candidate of lookupDates.slice(1)) {
+        if (readings.length > 0) {
+          break;
+        }
+
+        date = candidate;
+        readings = await loadIntervalReadingsForDay(candidate);
+      }
     }
 
     const responseDate = formatLocalDate(date);

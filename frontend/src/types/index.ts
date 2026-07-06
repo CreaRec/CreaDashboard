@@ -18,6 +18,7 @@ export type WidgetId =
   | 'waterDaily'
   | 'gasMonthly'
   | 'gasBills'
+  | 'localRestrictions'
   | 'calendar'
   | 'reminders'
   | 'notes';
@@ -197,6 +198,18 @@ export interface Note {
 
 export type UtilitiesMap = Record<UtilityType, UtilityData>;
 
+export interface RestrictionsData {
+  burnBan: {
+    active: boolean;
+    county: string;
+    label: string;
+  };
+  water: {
+    stageLabel: string;
+  };
+  fetchedAt: string;
+}
+
 export const WIDGET_LABELS: Record<WidgetId, string> = {
   electricityMonthly: 'Электричество (месяц)',
   electricityBills: 'Электричество (счет)',
@@ -207,6 +220,7 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   waterDaily: 'Вода (день)',
   gasMonthly: 'Газ (месяц)',
   gasBills: 'Газ (счет)',
+  localRestrictions: 'Местные ограничения',
   calendar: 'Календарь',
   reminders: 'Напоминания',
   notes: 'Заметки',

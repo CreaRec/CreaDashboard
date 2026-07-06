@@ -13,6 +13,7 @@ import ElectricityCurrentCard from '../components/utilities/ElectricityCurrentCa
 import CalendarWidget from '../components/calendar/CalendarWidget';
 import RemindersList from '../components/reminders/RemindersList';
 import NotesPanel from '../components/notes/NotesPanel';
+import LocalRestrictionsCard from '../components/restrictions/LocalRestrictionsCard';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useWidgetLayout } from '../hooks/useWidgetLayout';
 import type { WidgetId } from '../types';
@@ -29,6 +30,7 @@ export default function DashboardPage() {
     waterDaily,
     gasMonthly,
     gasBills,
+    restrictions,
     calendar,
     reminders,
     notes,
@@ -47,7 +49,7 @@ export default function DashboardPage() {
   } = useWidgetLayout();
 
   const widgets = useMemo(() => {
-    if (!utilities || !electricityMonthly || !electricityBills || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily || !gasMonthly || !gasBills) {
+    if (!utilities || !electricityMonthly || !electricityBills || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily || !gasMonthly || !gasBills || !restrictions) {
       return null;
     }
 
@@ -63,6 +65,7 @@ export default function DashboardPage() {
       waterDaily: <WaterDailyCard data={waterDaily} />,
       gasMonthly: <GasMonthlyCard data={gasMonthly} />,
       gasBills: <GasBillsCard data={gasBills} />,
+      localRestrictions: <LocalRestrictionsCard data={restrictions} />,
       calendar: <CalendarWidget events={calendar} />,
       reminders: <RemindersList reminders={reminders} />,
       notes: <NotesPanel notes={notes} />,
@@ -80,6 +83,7 @@ export default function DashboardPage() {
     waterDaily,
     gasMonthly,
     gasBills,
+    restrictions,
     calendar,
     reminders,
     notes,
