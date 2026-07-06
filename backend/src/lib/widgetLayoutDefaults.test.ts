@@ -10,7 +10,9 @@ describe('widget layout defaults', () => {
   it('orders all widgets with electricity widgets last', () => {
     expect(DEFAULT_WIDGET_ORDER).toEqual([
       WidgetId.electricityMonthly,
-      WidgetId.water,
+      WidgetId.waterMonthly,
+      WidgetId.waterBills,
+      WidgetId.waterDaily,
       WidgetId.gas,
       WidgetId.calendar,
       WidgetId.reminders,
@@ -20,9 +22,10 @@ describe('widget layout defaults', () => {
     ]);
   });
 
-  it('hides electricity interval and current widgets by default', () => {
+  it('hides electricity interval/current and water daily widgets by default', () => {
     expect(DEFAULT_VISIBILITY[WidgetId.electricityIntervals]).toBe(false);
     expect(DEFAULT_VISIBILITY[WidgetId.electricityCurrent]).toBe(false);
+    expect(DEFAULT_VISIBILITY[WidgetId.waterDaily]).toBe(false);
     expect(DEFAULT_VISIBILITY[WidgetId.calendar]).toBeUndefined();
   });
 

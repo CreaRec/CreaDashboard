@@ -7,6 +7,8 @@ import remindersRouter from './routes/reminders';
 import notesRouter from './routes/notes';
 import layoutRouter from './routes/layout';
 import smtIntegrationRouter from './routes/integrations/smt';
+import watersmartIntegrationRouter from './routes/integrations/watersmart';
+import waterRouter from './routes/water';
 import eventsRouter from './routes/events';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
@@ -43,6 +45,8 @@ app.use('/api/reminders', remindersRouter);
 app.use('/api/notes', notesRouter);
 app.use('/api/layout', layoutRouter);
 app.use('/api/integrations/smt', smtIntegrationRouter);
+app.use('/api/integrations/watersmart', watersmartIntegrationRouter);
+app.use('/api/water', waterRouter);
 app.use('/api/events', eventsRouter);
 
 const server = app.listen(PORT, () => {

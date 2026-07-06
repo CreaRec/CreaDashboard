@@ -4,3 +4,6 @@ export const TEMPORAL_TASK_QUEUE = process.env.TEMPORAL_TASK_QUEUE ?? 'smt-sync'
 export const SMT_SYNC_SCHEDULE_ID = 'smt-sync-schedule';
 export const SMT_SYNC_WORKFLOW = 'smtSyncWorkflow';
 export const SMT_SYNC_SCHEDULED_WORKFLOW_ID = 'smt-sync-scheduled';
+export const WATER_SYNC_SCHEDULE_ID = 'water-sync-schedule';
+export const WATER_SYNC_WORKFLOW = 'waterSyncWorkflow';
+export const WATER_SYNC_SCHEDULED_WORKFLOW_ID = 'water-sync-scheduled';

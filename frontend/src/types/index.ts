@@ -4,7 +4,9 @@ export type WidgetId =
   | 'electricityMonthly'
   | 'electricityIntervals'
   | 'electricityCurrent'
-  | 'water'
+  | 'waterMonthly'
+  | 'waterBills'
+  | 'waterDaily'
   | 'gas'
   | 'calendar'
   | 'reminders'
@@ -63,6 +65,50 @@ export interface ElectricityCurrentData {
   esiid: string | null;
 }
 
+export interface WaterDailyPoint {
+  date: string;
+  gallons: number;
+}
+
+export interface WaterDailyData {
+  connected: boolean;
+  month: string;
+  unit: string;
+  readings: WaterDailyPoint[];
+}
+
+export interface WaterBillPoint {
+  month: string;
+  amount: number;
+}
+
+export interface WaterBillsData {
+  connected: boolean;
+  label: string;
+  currency: string;
+  currentAmount: number;
+  readings: WaterBillPoint[];
+}
+
+export interface WaterMonthlyData {
+  connected: boolean;
+  label: string;
+  unit: string;
+  currency: string;
+  currentConsumption: number;
+  currentCost: number;
+  estimatedCost: boolean;
+  readings: UtilityReading[];
+}
+
+export interface WaterSmartStatus {
+  configured: boolean;
+  lastSync: string | null;
+  lastStatus: string | null;
+  lastError: string | null;
+  recordsCount: number;
+}
+
 export interface SmtStatus {
   configured: boolean;
   lastSync: string | null;
@@ -101,7 +147,9 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   electricityMonthly: 'Электричество (месяц)',
   electricityIntervals: 'Электричество (15 мин)',
   electricityCurrent: 'Электричество (сейчас)',
-  water: 'Вода',
+  waterMonthly: 'Вода (месяц)',
+  waterBills: 'Вода (счет)',
+  waterDaily: 'Вода (день)',
   gas: 'Газ',
   calendar: 'Календарь',
   reminders: 'Напоминания',

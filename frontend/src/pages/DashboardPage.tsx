@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import Header from '../components/Layout/Header';
 import DashboardGrid from '../components/Layout/DashboardGrid';
 import UtilityCard from '../components/utilities/UtilityCard';
+import WaterMonthlyCard from '../components/utilities/WaterMonthlyCard';
+import WaterBillsCard from '../components/utilities/WaterBillsCard';
+import WaterDailyCard from '../components/utilities/WaterDailyCard';
 import ElectricityMonthlyCard from '../components/utilities/ElectricityMonthlyCard';
 import ElectricityIntervalsCard from '../components/utilities/ElectricityIntervalsCard';
 import ElectricityCurrentCard from '../components/utilities/ElectricityCurrentCard';
@@ -18,6 +21,9 @@ export default function DashboardPage() {
     electricityMonthly,
     electricityIntervals,
     electricityCurrent,
+    waterMonthly,
+    waterBills,
+    waterDaily,
     calendar,
     reminders,
     notes,
@@ -36,7 +42,7 @@ export default function DashboardPage() {
   } = useWidgetLayout();
 
   const widgets = useMemo(() => {
-    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent) {
+    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily) {
       return null;
     }
 
@@ -46,7 +52,9 @@ export default function DashboardPage() {
         <ElectricityIntervalsCard data={electricityIntervals} />
       ),
       electricityCurrent: <ElectricityCurrentCard data={electricityCurrent} />,
-      water: <UtilityCard data={utilities.water} />,
+      waterMonthly: <WaterMonthlyCard data={waterMonthly} />,
+      waterBills: <WaterBillsCard data={waterBills} />,
+      waterDaily: <WaterDailyCard data={waterDaily} />,
       gas: <UtilityCard data={utilities.gas} />,
       calendar: <CalendarWidget events={calendar} />,
       reminders: <RemindersList reminders={reminders} />,
@@ -59,6 +67,9 @@ export default function DashboardPage() {
     electricityMonthly,
     electricityIntervals,
     electricityCurrent,
+    waterMonthly,
+    waterBills,
+    waterDaily,
     calendar,
     reminders,
     notes,

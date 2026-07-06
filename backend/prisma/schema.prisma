@@ -11,7 +11,9 @@ enum WidgetId {
   electricityMonthly
   electricityIntervals
   electricityCurrent
-  water
+  waterMonthly
+  waterBills
+  waterDaily
   gas
   calendar
   reminders
@@ -65,6 +67,23 @@ model ElectricityMeterSnapshot {
 }
 
 model SmtSyncLog {
+  id           String        @id @default(cuid())
+  status       SmtSyncStatus
+  syncedAt     DateTime      @default(now())
+  error        String?
+  recordsCount Int           @default(0)
+}
+
+model WaterDailyReading {
+  id            String   @id @default(cuid())
+  accountNumber String
+  date          DateTime @db.Date
+  gallons       Float
+
+  @@unique([accountNumber, date])
+}
+
+model WaterSyncLog {
   id           String        @id @default(cuid())
   status       SmtSyncStatus
   syncedAt     DateTime      @default(now())

@@ -33,10 +33,10 @@ describe('layout validation', () => {
 
   it('rejects missing visibility flag', () => {
     const partialVisibility = { ...visibility };
-    partialVisibility[WidgetId.water] = undefined as unknown as boolean;
+    partialVisibility[WidgetId.waterMonthly] = undefined as unknown as boolean;
 
     expect(validateLayoutPayload(ALL_WIDGET_IDS, partialVisibility)).toContain(
-      'Visibility for water'
+      'Visibility for waterMonthly'
     );
   });
 });

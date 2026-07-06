@@ -10,6 +10,7 @@ import {
   fetchElectricityIntervals,
   fetchElectricityMonthly,
 } from '../api/electricity';
+import { fetchWaterBills, fetchWaterDaily, fetchWaterMonthly } from '../api/water';
 import {
   DASHBOARD_REFRESH_INTERVAL_MS,
   subscribeToDashboardEvents,
@@ -22,6 +23,9 @@ import type {
   Note,
   Reminder,
   UtilitiesMap,
+  WaterBillsData,
+  WaterDailyData,
+  WaterMonthlyData,
 } from '../types';
 
 async function fetchAllDashboardData() {
@@ -30,6 +34,9 @@ async function fetchAllDashboardData() {
     monthlyData,
     intervalsData,
     currentData,
+    waterMonthlyData,
+    waterBillsData,
+    waterDailyData,
     calendarData,
     remindersData,
     notesData,
@@ -38,6 +45,9 @@ async function fetchAllDashboardData() {
     fetchElectricityMonthly(),
     fetchElectricityIntervals(),
     fetchElectricityCurrent(),
+    fetchWaterMonthly(),
+    fetchWaterBills(),
+    fetchWaterDaily(),
     fetchCalendar(),
     fetchReminders(),
     fetchNotes(),
@@ -48,6 +58,9 @@ async function fetchAllDashboardData() {
     electricityMonthly: monthlyData,
     electricityIntervals: intervalsData,
     electricityCurrent: currentData,
+    waterMonthly: waterMonthlyData,
+    waterBills: waterBillsData,
+    waterDaily: waterDailyData,
     calendar: calendarData,
     reminders: remindersData,
     notes: notesData,
@@ -62,6 +75,9 @@ export function useDashboardData() {
     useState<ElectricityIntervalsData | null>(null);
   const [electricityCurrent, setElectricityCurrent] =
     useState<ElectricityCurrentData | null>(null);
+  const [waterMonthly, setWaterMonthly] = useState<WaterMonthlyData | null>(null);
+  const [waterBills, setWaterBills] = useState<WaterBillsData | null>(null);
+  const [waterDaily, setWaterDaily] = useState<WaterDailyData | null>(null);
   const [calendar, setCalendar] = useState<CalendarEvent[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -86,6 +102,9 @@ export function useDashboardData() {
           setElectricityMonthly(data.electricityMonthly);
           setElectricityIntervals(data.electricityIntervals);
           setElectricityCurrent(data.electricityCurrent);
+          setWaterMonthly(data.waterMonthly);
+          setWaterBills(data.waterBills);
+          setWaterDaily(data.waterDaily);
           setCalendar(data.calendar);
           setReminders(data.reminders);
           setNotes(data.notes);
@@ -126,6 +145,9 @@ export function useDashboardData() {
     electricityMonthly,
     electricityIntervals,
     electricityCurrent,
+    waterMonthly,
+    waterBills,
+    waterDaily,
     calendar,
     reminders,
     notes,

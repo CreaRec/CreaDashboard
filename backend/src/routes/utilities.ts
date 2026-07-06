@@ -3,6 +3,7 @@ import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
 import { isSmtConfigured } from '../services/smartMeterTexas/types';
+import { isWaterSmartConfigured } from '../services/waterSmart/types';
 import { formatUtilityMonth } from '../services/smartMeterTexas/transform';
 
 const router = Router();
@@ -13,7 +14,7 @@ const utilityMeta: Record<
   { label: string; unit: string; currency: string }
 > = {
   electricity: { label: 'Электричество', unit: 'kWh', currency: 'USD' },
-  water: { label: 'Вода', unit: 'м³', currency: 'RUB' },
+  water: { label: 'Вода', unit: 'gal', currency: 'USD' },
   gas: { label: 'Газ', unit: 'м³', currency: 'RUB' },
 };
 
@@ -48,7 +49,12 @@ router.get('/', async (_req, res) => {
         label: meta.label,
         unit: meta.unit,
         currency: meta.currency,
-        connected: type === UtilityType.electricity ? isSmtConfigured() : false,
+        connected:
+          type === UtilityType.electricity
+            ? isSmtConfigured()
+            : type === UtilityType.water
+              ? isWaterSmartConfigured()
+              : false,
         currentConsumption: latest?.consumption ?? 0,
         currentCost: latest?.cost ?? 0,
         readings: typeReadings.map((r) => ({

@@ -2,7 +2,9 @@ import { PrismaClient, WidgetId } from '@prisma/client';
 
 export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
   WidgetId.electricityMonthly,
-  WidgetId.water,
+  WidgetId.waterMonthly,
+  WidgetId.waterBills,
+  WidgetId.waterDaily,
   WidgetId.gas,
   WidgetId.calendar,
   WidgetId.reminders,
@@ -14,6 +16,7 @@ export const DEFAULT_WIDGET_ORDER: WidgetId[] = [
 export const DEFAULT_VISIBILITY: Partial<Record<WidgetId, boolean>> = {
   [WidgetId.electricityIntervals]: false,
   [WidgetId.electricityCurrent]: false,
+  [WidgetId.waterDaily]: false,
 };
 
 export function getDefaultVisibility(): Record<WidgetId, boolean> {

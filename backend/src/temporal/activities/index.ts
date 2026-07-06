@@ -7,3 +7,10 @@ export {
   syncOnDemandReading,
   logSyncResult,
 } from './smtSyncActivities';
+
+export {
+  checkWaterSmartConfigured,
+  resolveWaterAccount,
+  syncWaterReadings,
+  logWaterSyncResult,
+} from './waterSyncActivities';

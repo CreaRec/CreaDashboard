@@ -5,6 +5,9 @@ vi.mock('./prisma', () => ({
     smtSyncLog: {
       findFirst: vi.fn(),
     },
+    waterSyncLog: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -38,6 +41,7 @@ describe('realtime', () => {
 
   it('startSyncWatcher is importable with prisma mock', async () => {
     vi.mocked(prisma.smtSyncLog.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.waterSyncLog.findFirst).mockResolvedValue(null);
     const { startSyncWatcher } = await import('./realtime');
     expect(typeof startSyncWatcher).toBe('function');
   });
