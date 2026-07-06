@@ -8,7 +8,9 @@ datasource db {
 }
 
 enum WidgetId {
-  electricity
+  electricityMonthly
+  electricityIntervals
+  electricityCurrent
   water
   gas
   calendar
@@ -22,9 +24,16 @@ enum UtilityType {
   gas
 }
 
+enum SmtSyncStatus {
+  success
+  error
+  skipped
+}
+
 model WidgetLayout {
   widgetId  WidgetId @id
   position  Int      @unique
+  visible   Boolean  @default(true)
   updatedAt DateTime @updatedAt
 }
 
@@ -36,6 +45,31 @@ model UtilityReading {
   cost        Float
 
   @@unique([utilityType, month])
+}
+
+model ElectricityIntervalReading {
+  id        String   @id @default(cuid())
+  esiid     String
+  timestamp DateTime
+  kwh       Float
+
+  @@unique([esiid, timestamp])
+}
+
+model ElectricityMeterSnapshot {
+  id         String   @id @default(cuid())
+  esiid      String   @unique
+  readingKwh Float
+  readAt     DateTime
+  updatedAt  DateTime @updatedAt
+}
+
+model SmtSyncLog {
+  id           String        @id @default(cuid())
+  status       SmtSyncStatus
+  syncedAt     DateTime      @default(now())
+  error        String?
+  recordsCount Int           @default(0)
 }
 
 model CalendarEvent {

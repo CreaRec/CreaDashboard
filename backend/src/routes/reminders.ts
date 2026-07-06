@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { createLogger } from '../lib/logger';
 
 const router = Router();
+const log = createLogger('reminders');
 
 router.get('/', async (_req, res) => {
+  log.debug('GET /');
   try {
     const reminders = await prisma.reminder.findMany({
       orderBy: { dueDate: 'asc' },
     });
 
+    log.debug('Reminders loaded', { count: reminders.length });
     res.json(
       reminders.map((reminder) => ({
         id: reminder.id,
@@ -19,7 +23,7 @@ router.get('/', async (_req, res) => {
       }))
     );
   } catch (error) {
-    console.error(error);
+    log.error('Failed to fetch reminders', error);
     res.status(500).json({ error: 'Failed to fetch reminders' });
   }
 });

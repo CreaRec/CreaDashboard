@@ -4,17 +4,14 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "tsx watch --env-file=.env src/index.ts",
+    "dev": "LOG_LEVEL=debug tsx watch --env-file=.env src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed",
+    "test": "vitest run",
     "db:studio": "prisma studio"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -27,6 +24,7 @@
     "@types/node": "^22.10.5",
     "prisma": "^6.19.3",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.6"
   }
 }

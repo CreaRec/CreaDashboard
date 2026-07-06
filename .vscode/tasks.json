@@ -21,36 +21,23 @@
       }
     },
     {
+      "label": "dev:servers",
+      "dependsOn": ["dev:backend", "dev:frontend"],
+      "dependsOrder": "parallel",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "dev",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "shell": {
-          "executable": "/bin/zsh",
-          "args": ["-ilc"]
-        }
-      },
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "crea-dashboard",
-        "pattern": { "regexp": "." },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".",
-          "endsPattern": "(Backend running|Project is running at|compiled successfully)"
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "focus": false
-      }
+      "dependsOn": ["setup", "dev:servers"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     },
     {
       "label": "dev:backend",
-      "dependsOrder": "sequence",
-      "dependsOn": ["setup"],
       "type": "shell",
       "command": "npm run dev",
       "options": {
@@ -72,13 +59,12 @@
       },
       "presentation": {
         "reveal": "always",
-        "panel": "dedicated"
+        "panel": "dedicated",
+        "showReuseMessage": false
       }
     },
     {
       "label": "dev:frontend",
-      "dependsOrder": "sequence",
-      "dependsOn": ["setup"],
       "type": "shell",
       "command": "npm run dev",
       "options": {
@@ -100,7 +86,8 @@
       },
       "presentation": {
         "reveal": "always",
-        "panel": "dedicated"
+        "panel": "dedicated",
+        "showReuseMessage": false
       }
     },
     {

@@ -34,7 +34,6 @@ function setupDatabase() {
   ensureBackendEnv();
   run('npm run db:generate -w backend');
   run('npm run db:migrate:deploy -w backend');
-  run('npm run db:seed -w backend');
 }
 
 setupDatabase();

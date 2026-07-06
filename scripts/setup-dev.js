@@ -8,6 +8,8 @@ const root = path.resolve(__dirname, '..');
 const backendDir = path.join(root, 'backend');
 const backendEnvPath = path.join(backendDir, '.env');
 const envExamplePath = path.join(root, '.env.example');
+const devLauncherExtensionPath = path.join(root, '.vscode/crea-dev-launcher');
+const DEV_LAUNCHER_EXTENSION_ID = 'local.crea-dev-launcher';
 
 const DOCKER_BINARIES = [
   'docker',
@@ -123,6 +125,42 @@ function startPostgres(dockerBinary) {
   }
 }
 
+function ensureDevLauncherExtension() {
+  if (!fs.existsSync(devLauncherExtensionPath)) {
+    return;
+  }
+
+  const extensionTargets = [
+    path.join(process.env.HOME, '.cursor', 'extensions'),
+    path.join(process.env.HOME, '.vscode', 'extensions'),
+  ];
+
+  const targetName = `${DEV_LAUNCHER_EXTENSION_ID}-0.1.0`;
+  let linked = false;
+
+  for (const extensionsDir of extensionTargets) {
+    const linkPath = path.join(extensionsDir, targetName);
+
+    if (fs.existsSync(linkPath)) {
+      linked = true;
+      continue;
+    }
+
+    try {
+      fs.mkdirSync(extensionsDir, { recursive: true });
+      fs.symlinkSync(devLauncherExtensionPath, linkPath, 'dir');
+      linked = true;
+      log(`Linked dev launcher extension into ${extensionsDir}`);
+    } catch {
+      // Try the next editor extensions directory.
+    }
+  }
+
+  if (linked) {
+    log('Reload Cursor window once if dev servers do not start automatically');
+  }
+}
+
 function failWithInstructions(reason) {
   console.error(`\n[setup] ${reason}`);
   console.error(
@@ -161,6 +199,7 @@ function main() {
   }
 
   run('node scripts/setup-db.js');
+  ensureDevLauncherExtension();
   log('Development environment is ready');
 }
 

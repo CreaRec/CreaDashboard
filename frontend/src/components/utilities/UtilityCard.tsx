@@ -46,7 +46,9 @@ export default function UtilityCard({ data }: UtilityCardProps) {
       <p className="mb-3 text-sm text-gray-500">
         Сумма:{' '}
         <span className="font-medium text-gray-700">
-          {data.currentCost.toLocaleString('ru-RU')} ₽
+          {data.currency === 'USD'
+            ? `$${data.currentCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : `${data.currentCost.toLocaleString('ru-RU')} ₽`}
         </span>
       </p>
 

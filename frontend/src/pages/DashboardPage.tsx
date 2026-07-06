@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import Header from '../components/Layout/Header';
 import DashboardGrid from '../components/Layout/DashboardGrid';
 import UtilityCard from '../components/utilities/UtilityCard';
+import ElectricityMonthlyCard from '../components/utilities/ElectricityMonthlyCard';
+import ElectricityIntervalsCard from '../components/utilities/ElectricityIntervalsCard';
+import ElectricityCurrentCard from '../components/utilities/ElectricityCurrentCard';
 import CalendarWidget from '../components/calendar/CalendarWidget';
 import RemindersList from '../components/reminders/RemindersList';
 import NotesPanel from '../components/notes/NotesPanel';
@@ -12,6 +15,9 @@ import type { WidgetId } from '../types';
 export default function DashboardPage() {
   const {
     utilities,
+    electricityMonthly,
+    electricityIntervals,
+    electricityCurrent,
     calendar,
     reminders,
     notes,
@@ -19,19 +25,25 @@ export default function DashboardPage() {
     error: dataError,
   } = useDashboardData();
   const {
-    order,
+    visibleOrder,
+    visibility,
     loading: layoutLoading,
     error: layoutError,
     handleDragEnd,
+    handleVisibilityChange,
   } = useWidgetLayout();
 
   const widgets = useMemo(() => {
-    if (!utilities) {
+    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent) {
       return null;
     }
 
     const registry: Record<WidgetId, React.ReactNode> = {
-      electricity: <UtilityCard data={utilities.electricity} />,
+      electricityMonthly: <ElectricityMonthlyCard data={electricityMonthly} />,
+      electricityIntervals: (
+        <ElectricityIntervalsCard data={electricityIntervals} />
+      ),
+      electricityCurrent: <ElectricityCurrentCard data={electricityCurrent} />,
       water: <UtilityCard data={utilities.water} />,
       gas: <UtilityCard data={utilities.gas} />,
       calendar: <CalendarWidget events={calendar} />,
@@ -40,14 +52,26 @@ export default function DashboardPage() {
     };
 
     return registry;
-  }, [utilities, calendar, reminders, notes]);
+  }, [
+    utilities,
+    electricityMonthly,
+    electricityIntervals,
+    electricityCurrent,
+    calendar,
+    reminders,
+    notes,
+  ]);
 
   const loading = dataLoading || layoutLoading;
   const error = dataError || layoutError;
 
   return (
     <div className="min-h-screen bg-surface-muted">
-      <Header />
+      <Header
+        visibility={visibility}
+        onVisibilityChange={handleVisibilityChange}
+        layoutLoading={layoutLoading}
+      />
       {loading && (
         <div className="mx-auto max-w-7xl p-6 text-sm text-gray-500">
           Загрузка дашборда...
@@ -56,12 +80,17 @@ export default function DashboardPage() {
       {error && (
         <div className="mx-auto max-w-7xl p-6 text-sm text-red-600">{error}</div>
       )}
-      {!loading && widgets && order.length > 0 && (
+      {!loading && widgets && visibleOrder.length > 0 && (
         <DashboardGrid
-          order={order}
+          order={visibleOrder}
           widgets={widgets}
           onDragEnd={handleDragEnd}
         />
+      )}
+      {!loading && visibleOrder.length === 0 && (
+        <div className="mx-auto max-w-7xl p-6 text-sm text-gray-500">
+          Все виджеты скрыты. Включите их в меню «Виджеты».
+        </div>
       )}
     </div>
   );

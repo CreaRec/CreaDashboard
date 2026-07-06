@@ -1,19 +1,23 @@
 import { Router } from 'express';
 import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { createLogger } from '../lib/logger';
+import { isSmtConfigured } from '../services/smartMeterTexas/types';
 
 const router = Router();
+const log = createLogger('utilities');
 
 const utilityMeta: Record<
   UtilityType,
-  { label: string; unit: string }
+  { label: string; unit: string; currency: string }
 > = {
-  electricity: { label: 'Электричество', unit: 'кВт·ч' },
-  water: { label: 'Вода', unit: 'м³' },
-  gas: { label: 'Газ', unit: 'м³' },
+  electricity: { label: 'Электричество', unit: 'kWh', currency: 'USD' },
+  water: { label: 'Вода', unit: 'м³', currency: 'RUB' },
+  gas: { label: 'Газ', unit: 'м³', currency: 'RUB' },
 };
 
 router.get('/', async (_req, res) => {
+  log.debug('GET /');
   try {
     const readings = await prisma.utilityReading.findMany({
       orderBy: [{ utilityType: 'asc' }, { month: 'asc' }],
@@ -25,6 +29,8 @@ router.get('/', async (_req, res) => {
         type: UtilityType;
         label: string;
         unit: string;
+        currency: string;
+        connected: boolean;
         currentConsumption: number;
         currentCost: number;
         readings: Array<{ month: string; consumption: number; cost: number }>;
@@ -40,6 +46,8 @@ router.get('/', async (_req, res) => {
         type,
         label: meta.label,
         unit: meta.unit,
+        currency: meta.currency,
+        connected: type === UtilityType.electricity ? isSmtConfigured() : false,
         currentConsumption: latest?.consumption ?? 0,
         currentCost: latest?.cost ?? 0,
         readings: typeReadings.map((r) => ({
@@ -50,9 +58,10 @@ router.get('/', async (_req, res) => {
       };
     }
 
+    log.debug('Utilities loaded', { readingCount: readings.length });
     res.json(result);
   } catch (error) {
-    console.error(error);
+    log.error('Failed to fetch utilities', error);
     res.status(500).json({ error: 'Failed to fetch utilities' });
   }
 });

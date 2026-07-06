@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { createLogger } from '../lib/logger';
 
 const router = Router();
+const log = createLogger('notes');
 
 router.get('/', async (_req, res) => {
+  log.debug('GET /');
   try {
     const notes = await prisma.note.findMany({
       orderBy: { updatedAt: 'desc' },
     });
 
+    log.debug('Notes loaded', { count: notes.length });
     res.json(
       notes.map((note) => ({
         id: note.id,
@@ -19,7 +23,7 @@ router.get('/', async (_req, res) => {
       }))
     );
   } catch (error) {
-    console.error(error);
+    log.error('Failed to fetch notes', error);
     res.status(500).json({ error: 'Failed to fetch notes' });
   }
 });
