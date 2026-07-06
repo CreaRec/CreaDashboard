@@ -7,9 +7,11 @@ import remindersRouter from './routes/reminders';
 import notesRouter from './routes/notes';
 import layoutRouter from './routes/layout';
 import smtIntegrationRouter from './routes/integrations/smt';
+import eventsRouter from './routes/events';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
 import { ensureAppTimeZone } from './lib/timezone';
+import { startSyncWatcher } from './lib/realtime';
 
 ensureAppTimeZone();
 
@@ -41,9 +43,11 @@ app.use('/api/reminders', remindersRouter);
 app.use('/api/notes', notesRouter);
 app.use('/api/layout', layoutRouter);
 app.use('/api/integrations/smt', smtIntegrationRouter);
+app.use('/api/events', eventsRouter);
 
 const server = app.listen(PORT, () => {
   log.info(`Backend running on http://localhost:${PORT} (log level: ${resolveLogLevel()})`);
+  startSyncWatcher();
 });
 
 async function shutdown() {

@@ -22,6 +22,8 @@ export default function DashboardPage() {
     reminders,
     notes,
     loading: dataLoading,
+    refreshing: dataRefreshing,
+    lastUpdatedAt,
     error: dataError,
   } = useDashboardData();
   const {
@@ -71,6 +73,8 @@ export default function DashboardPage() {
         visibility={visibility}
         onVisibilityChange={handleVisibilityChange}
         layoutLoading={layoutLoading}
+        lastUpdatedAt={lastUpdatedAt}
+        refreshing={dataRefreshing}
       />
       {loading && (
         <div className="mx-auto max-w-7xl p-6 text-sm text-gray-500">

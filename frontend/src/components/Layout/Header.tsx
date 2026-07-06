@@ -23,18 +23,30 @@ interface HeaderProps {
   visibility: Record<WidgetId, boolean>;
   onVisibilityChange: (widgetId: WidgetId, visible: boolean) => void;
   layoutLoading?: boolean;
+  lastUpdatedAt?: Date | null;
+  refreshing?: boolean;
+}
+
+function formatLastUpdated(date: Date): string {
+  return date.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 export default function Header({
   visibility,
   onVisibilityChange,
   layoutLoading = false,
+  lastUpdatedAt = null,
+  refreshing = false,
 }: HeaderProps) {
   const [now, setNow] = useState(new Date());
   const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -47,6 +59,22 @@ export default function Header({
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span
+              className={`inline-flex h-2 w-2 rounded-full ${
+                refreshing ? 'animate-pulse bg-amber-400' : 'bg-emerald-500'
+              }`}
+              aria-hidden
+            />
+            <span>
+              {refreshing
+                ? 'Обновление...'
+                : lastUpdatedAt
+                  ? `Обновлено ${formatLastUpdated(lastUpdatedAt)}`
+                  : 'Загрузка...'}
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={() => setPanelOpen((open) => !open)}

@@ -10,6 +10,10 @@ import {
   fetchElectricityIntervals,
   fetchElectricityMonthly,
 } from '../api/electricity';
+import {
+  DASHBOARD_REFRESH_INTERVAL_MS,
+  subscribeToDashboardEvents,
+} from '../api/events';
 import type {
   CalendarEvent,
   ElectricityCurrentData,
@@ -19,6 +23,36 @@ import type {
   Reminder,
   UtilitiesMap,
 } from '../types';
+
+async function fetchAllDashboardData() {
+  const [
+    utilitiesData,
+    monthlyData,
+    intervalsData,
+    currentData,
+    calendarData,
+    remindersData,
+    notesData,
+  ] = await Promise.all([
+    fetchUtilities(),
+    fetchElectricityMonthly(),
+    fetchElectricityIntervals(),
+    fetchElectricityCurrent(),
+    fetchCalendar(),
+    fetchReminders(),
+    fetchNotes(),
+  ]);
+
+  return {
+    utilities: utilitiesData,
+    electricityMonthly: monthlyData,
+    electricityIntervals: intervalsData,
+    electricityCurrent: currentData,
+    calendar: calendarData,
+    reminders: remindersData,
+    notes: notesData,
+  };
+}
 
 export function useDashboardData() {
   const [utilities, setUtilities] = useState<UtilitiesMap | null>(null);
@@ -32,56 +66,58 @@ export function useDashboardData() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadData() {
+    async function loadData(isBackground: boolean) {
+      if (isBackground) {
+        setRefreshing(true);
+      }
+
       try {
-        const [
-          utilitiesData,
-          monthlyData,
-          intervalsData,
-          currentData,
-          calendarData,
-          remindersData,
-          notesData,
-        ] = await Promise.all([
-          fetchUtilities(),
-          fetchElectricityMonthly(),
-          fetchElectricityIntervals(),
-          fetchElectricityCurrent(),
-          fetchCalendar(),
-          fetchReminders(),
-          fetchNotes(),
-        ]);
+        const data = await fetchAllDashboardData();
 
         if (!cancelled) {
-          setUtilities(utilitiesData);
-          setElectricityMonthly(monthlyData);
-          setElectricityIntervals(intervalsData);
-          setElectricityCurrent(currentData);
-          setCalendar(calendarData);
-          setReminders(remindersData);
-          setNotes(notesData);
+          setUtilities(data.utilities);
+          setElectricityMonthly(data.electricityMonthly);
+          setElectricityIntervals(data.electricityIntervals);
+          setElectricityCurrent(data.electricityCurrent);
+          setCalendar(data.calendar);
+          setReminders(data.reminders);
+          setNotes(data.notes);
+          setLastUpdatedAt(new Date());
           setError(null);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !isBackground) {
           setError('Не удалось загрузить данные дашборда');
         }
       } finally {
         if (!cancelled) {
           setLoading(false);
+          setRefreshing(false);
         }
       }
     }
 
-    loadData();
+    loadData(false);
+
+    const pollTimer = setInterval(() => {
+      loadData(true);
+    }, DASHBOARD_REFRESH_INTERVAL_MS);
+
+    const unsubscribeEvents = subscribeToDashboardEvents(() => {
+      loadData(true);
+    });
 
     return () => {
       cancelled = true;
+      clearInterval(pollTimer);
+      unsubscribeEvents();
     };
   }, []);
 
@@ -94,6 +130,8 @@ export function useDashboardData() {
     reminders,
     notes,
     loading,
+    refreshing,
+    lastUpdatedAt,
     error,
   };
 }

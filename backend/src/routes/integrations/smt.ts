@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import { SmtSyncStatus } from '@prisma/client';
 import { createLogger } from '../../lib/logger';
+import { broadcastDashboardUpdate } from '../../lib/realtime';
 import { getSmtStatus } from '../../services/smartMeterTexas/sync';
 import { getTemporalClient } from '../../temporal/client';
 import {
@@ -38,6 +40,11 @@ router.post('/sync', async (req, res) => {
       status: result.status,
       recordsCount: result.recordsCount,
     });
+
+    if (result.status === SmtSyncStatus.success) {
+      broadcastDashboardUpdate();
+    }
+
     res.json(result);
   } catch (error) {
     log.error('Failed to sync SMT data', error);
