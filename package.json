@@ -12,6 +12,7 @@
     "dev": "npm run setup && npm run dev:servers",
     "build": "npm run build -w backend && npm run build -w frontend",
     "start": "node scripts/setup-db.js && npm run start -w backend",
+    "test": "npm run test -w backend && npm run test:scripts",
     "db:up": "docker compose up -d",
     "db:migrate": "npm run db:migrate:deploy -w backend",
     "test:scripts": "node --test scripts/dev-servers.test.js"

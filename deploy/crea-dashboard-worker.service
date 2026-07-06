@@ -1,0 +1,20 @@
+[Unit]
+Description=CreaDashboard Temporal worker
+After=network-online.target docker.service crea-dashboard-api.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__APP_DIR__/backend
+EnvironmentFile=__APP_DIR__/backend/.env
+ExecStart=/usr/bin/env node dist/temporal/worker.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=crea-dashboard-worker
+
+[Install]
+WantedBy=multi-user.target

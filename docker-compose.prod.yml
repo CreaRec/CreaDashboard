@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: crea-dashboard-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5435:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crea}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crea}
+      POSTGRES_DB: ${POSTGRES_DB:-crea_dashboard}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crea} -d ${POSTGRES_DB:-crea_dashboard}"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  temporal:
+    image: temporalio/auto-setup:1.27.2
+    container_name: crea-dashboard-temporal
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-crea}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:-crea}
+      POSTGRES_SEEDS: postgres
+    ports:
+      - "127.0.0.1:7233:7233"
+
+  temporal-ui:
+    image: temporalio/ui:2.37.2
+    container_name: crea-dashboard-temporal-ui
+    restart: unless-stopped
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: ${TEMPORAL_CORS_ORIGIN:-http://192.168.1.135:8080}
+    ports:
+      - "${LAN_BIND_IP:-192.168.1.135}:${TEMPORAL_UI_HTTP_PORT:-8080}:8080"
