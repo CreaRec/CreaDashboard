@@ -111,11 +111,31 @@ model ChampionSyncLog {
 }
 
 model CalendarEvent {
-  id     String    @id @default(cuid())
-  title  String
-  start  DateTime
-  end    DateTime?
-  source String
+  id          String    @id @default(cuid())
+  externalId  String
+  calendarUrl String
+  title       String
+  start       DateTime
+  end         DateTime?
+  source      String
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([source, externalId])
+  @@index([source, start])
+}
+
+model CalendarSyncLog {
+  id           String        @id @default(cuid())
+  status       SmtSyncStatus
+  syncedAt     DateTime      @default(now())
+  error        String?
+  recordsCount Int           @default(0)
+}
+
+model CalendarSyncState {
+  calendarUrl String   @id
+  syncToken   String?
+  updatedAt   DateTime @updatedAt
 }
 
 model Reminder {

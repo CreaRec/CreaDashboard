@@ -23,6 +23,8 @@
     "@temporalio/workflow": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "ical.js": "^2.2.1",
+    "tsdav": "^2.3.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

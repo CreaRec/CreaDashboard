@@ -6,6 +6,7 @@ import { getAtmosConfig } from '../services/atmosEnergy/types';
 import { getChampionConfig } from '../services/championEnergy/types';
 import { isOpenAiConfigured } from '../lib/openai/client';
 import { getRestrictionsConfig } from '../services/restrictions/types';
+import { getAppleCalendarConfig } from '../services/appleCalendar/types';
 import {
   ATMOS_SYNC_SCHEDULED_WORKFLOW_ID,
   ATMOS_SYNC_SCHEDULE_ID,
@@ -16,6 +17,9 @@ import {
   RESTRICTIONS_SYNC_SCHEDULED_WORKFLOW_ID,
   RESTRICTIONS_SYNC_SCHEDULE_ID,
   RESTRICTIONS_SYNC_WORKFLOW,
+  CALENDAR_SYNC_SCHEDULED_WORKFLOW_ID,
+  CALENDAR_SYNC_SCHEDULE_ID,
+  CALENDAR_SYNC_WORKFLOW,
   SMT_SYNC_SCHEDULED_WORKFLOW_ID,
   SMT_SYNC_SCHEDULE_ID,
   SMT_SYNC_WORKFLOW,
@@ -298,5 +302,57 @@ export async function ensureRestrictionsSyncSchedule(client?: Client): Promise<v
       policies: scheduleSpec.policies,
     }));
     log.info('Restrictions sync schedule updated', { intervalMinutes });
+  }
+}
+
+export async function ensureCalendarSyncSchedule(client?: Client): Promise<void> {
+  const config = getAppleCalendarConfig();
+  if (!config) {
+    log.debug('Calendar sync schedule not created: not configured');
+    return;
+  }
+
+  const intervalMinutes = Math.max(config.syncIntervalMinutes, 1);
+  const temporalClient =
+    client ??
+    new Client({
+      connection: await Connection.connect({ address: TEMPORAL_ADDRESS }),
+      namespace: TEMPORAL_NAMESPACE,
+    });
+
+  const scheduleSpec = {
+    scheduleId: CALENDAR_SYNC_SCHEDULE_ID,
+    spec: {
+      intervals: [{ every: `${intervalMinutes} minutes` as `${number} minutes` }],
+    },
+    action: {
+      type: 'startWorkflow' as const,
+      workflowType: CALENDAR_SYNC_WORKFLOW,
+      taskQueue: TEMPORAL_TASK_QUEUE,
+      args: [],
+      workflowId: CALENDAR_SYNC_SCHEDULED_WORKFLOW_ID,
+    },
+    policies: {
+      overlap: ScheduleOverlapPolicy.SKIP,
+      catchupWindow: '1 day' as const,
+    },
+  };
+
+  try {
+    await temporalClient.schedule.create(scheduleSpec);
+    log.info('Calendar sync schedule created', { intervalMinutes });
+  } catch (error) {
+    if (!isScheduleAlreadyExists(error)) {
+      throw error;
+    }
+
+    const handle = temporalClient.schedule.getHandle(CALENDAR_SYNC_SCHEDULE_ID);
+    await handle.update((previous) => ({
+      ...previous,
+      spec: scheduleSpec.spec,
+      action: scheduleSpec.action,
+      policies: scheduleSpec.policies,
+    }));
+    log.info('Calendar sync schedule updated', { intervalMinutes });
   }
 }

@@ -6,6 +6,7 @@ export default defineConfig({
     include: [
       'src/**/*.test.ts',
       '../frontend/src/components/utilities/integrationStatus.test.ts',
+      '../frontend/src/components/calendar/calendarUtils.test.ts',
     ],
   },
 });

@@ -16,3 +16,6 @@ export const CHAMPION_SYNC_SCHEDULED_WORKFLOW_ID = 'champion-sync-scheduled';
 export const RESTRICTIONS_SYNC_SCHEDULE_ID = 'restrictions-sync-schedule';
 export const RESTRICTIONS_SYNC_WORKFLOW = 'restrictionsSyncWorkflow';
 export const RESTRICTIONS_SYNC_SCHEDULED_WORKFLOW_ID = 'restrictions-sync-scheduled';
+export const CALENDAR_SYNC_SCHEDULE_ID = 'calendar-sync-schedule';
+export const CALENDAR_SYNC_WORKFLOW = 'calendarSyncWorkflow';
+export const CALENDAR_SYNC_SCHEDULED_WORKFLOW_ID = 'calendar-sync-scheduled';

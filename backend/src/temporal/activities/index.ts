@@ -32,3 +32,9 @@ export {
   runRestrictionsSync,
   logRestrictionsSyncActivityResult,
 } from './restrictionsSyncActivities';
+
+export {
+  checkAppleCalendarConfigured,
+  runCalendarSync,
+  logCalendarSyncActivityResult,
+} from './calendarSyncActivities';

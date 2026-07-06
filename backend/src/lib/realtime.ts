@@ -12,6 +12,7 @@ let lastSeenWaterSyncedAt: Date | null = null;
 let lastSeenGasSyncedAt: Date | null = null;
 let lastSeenChampionSyncedAt: Date | null = null;
 let lastSeenRestrictionsSyncedAt: Date | null = null;
+let lastSeenCalendarSyncedAt: Date | null = null;
 let syncWatcherStarted = false;
 
 export function subscribeDashboardEvents(listener: DashboardEventListener): () => void {
@@ -33,7 +34,7 @@ export function startSyncWatcher(pollMs = 15_000): void {
 
   setInterval(async () => {
     try {
-      const [latestSmt, latestWater, latestGas, latestChampion, latestRestrictions] =
+      const [latestSmt, latestWater, latestGas, latestChampion, latestRestrictions, latestCalendar] =
         await Promise.all([
         prisma.smtSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
@@ -52,6 +53,10 @@ export function startSyncWatcher(pollMs = 15_000): void {
           select: { syncedAt: true },
         }),
         prisma.restrictionsSyncLog.findFirst({
+          orderBy: { syncedAt: 'desc' },
+          select: { syncedAt: true },
+        }),
+        prisma.calendarSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
           select: { syncedAt: true },
         }),
@@ -99,6 +104,14 @@ export function startSyncWatcher(pollMs = 15_000): void {
         shouldBroadcast = true;
       }
 
+      if (
+        latestCalendar &&
+        lastSeenCalendarSyncedAt !== null &&
+        latestCalendar.syncedAt.getTime() !== lastSeenCalendarSyncedAt.getTime()
+      ) {
+        shouldBroadcast = true;
+      }
+
       if (shouldBroadcast) {
         log.debug('New utility sync detected, broadcasting dashboard update');
         broadcastDashboardUpdate();
@@ -118,6 +131,9 @@ export function startSyncWatcher(pollMs = 15_000): void {
       }
       if (latestRestrictions) {
         lastSeenRestrictionsSyncedAt = latestRestrictions.syncedAt;
+      }
+      if (latestCalendar) {
+        lastSeenCalendarSyncedAt = latestCalendar.syncedAt;
       }
     } catch (error) {
       log.error('Sync watcher failed', error);
