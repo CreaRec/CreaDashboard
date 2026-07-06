@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react';
 import type { ElectricityMonthlyData } from '../../types';
 import ConsumptionChart from './ConsumptionChart';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#f59e0b';
 
@@ -29,9 +30,12 @@ export default function ElectricityMonthlyCard({ data }: ElectricityMonthlyCardP
           </div>
           <span className="text-sm font-medium text-gray-700">{data.label}</span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? 'Smart Meter Texas' : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label="Smart Meter Texas"
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       <div className="mb-3 flex items-baseline gap-1">

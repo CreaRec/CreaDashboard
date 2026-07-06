@@ -9,6 +9,7 @@ import {
   todayLocal,
 } from '../lib/timezone';
 import { formatUtilityMonth } from '../services/smartMeterTexas/transform';
+import { getWaterSmartStatus } from '../services/waterSmart/sync';
 import {
   getWaterSmartConfig,
   isWaterSmartConfigured,
@@ -40,10 +41,13 @@ router.get('/monthly', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const waterStatus = await getWaterSmartStatus();
 
     log.debug('Water monthly readings loaded', { count: readings.length });
     res.json({
       connected: isWaterSmartConfigured(),
+      syncStatus: waterStatus.lastStatus,
+      syncError: waterStatus.lastError,
       label: 'Вода',
       unit: 'gal',
       currency: 'USD',
@@ -74,10 +78,13 @@ router.get('/bills', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const waterStatus = await getWaterSmartStatus();
 
     log.debug('Water bills loaded', { count: readings.length });
     res.json({
       connected: isWaterSmartConfigured(),
+      syncStatus: waterStatus.lastStatus,
+      syncError: waterStatus.lastError,
       label: 'Вода (счет)',
       currency: 'USD',
       currentAmount: latest?.cost ?? 0,
@@ -120,9 +127,12 @@ router.get('/daily', async (req, res) => {
     });
 
     const monthLabel = formatLocalDate(startOfMonth(anchorDate)).slice(0, 7);
+    const waterStatus = await getWaterSmartStatus();
     log.debug('Water daily readings loaded', { count: readings.length, month: monthLabel });
     res.json({
       connected: isWaterSmartConfigured(),
+      syncStatus: waterStatus.lastStatus,
+      syncError: waterStatus.lastError,
       month: monthLabel,
       unit: 'gal',
       readings: readings.map((reading) => ({

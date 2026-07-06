@@ -3,6 +3,7 @@ import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
 import { formatUtilityMonth } from '../services/smartMeterTexas/transform';
+import { getAtmosStatus } from '../services/atmosEnergy/sync';
 import { getAtmosConfig, isAtmosConfigured } from '../services/atmosEnergy/types';
 
 const router = Router();
@@ -18,10 +19,13 @@ router.get('/monthly', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const atmosStatus = await getAtmosStatus();
 
     log.debug('Gas monthly readings loaded', { count: readings.length });
     res.json({
       connected: isAtmosConfigured(),
+      syncStatus: atmosStatus.lastStatus,
+      syncError: atmosStatus.lastError,
       label: 'Газ',
       unit: 'CCF',
       currency: 'USD',
@@ -52,10 +56,13 @@ router.get('/bills', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const atmosStatus = await getAtmosStatus();
 
     log.debug('Gas bills loaded', { count: readings.length });
     res.json({
       connected: isAtmosConfigured(),
+      syncStatus: atmosStatus.lastStatus,
+      syncError: atmosStatus.lastError,
       label: 'Газ (счет)',
       currency: 'USD',
       currentAmount: latest?.cost ?? 0,

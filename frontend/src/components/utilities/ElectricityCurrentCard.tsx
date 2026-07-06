@@ -1,5 +1,6 @@
 import { Zap } from 'lucide-react';
 import type { ElectricityCurrentData } from '../../types';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#f59e0b';
 
@@ -35,9 +36,12 @@ export default function ElectricityCurrentCard({ data }: ElectricityCurrentCardP
             Текущее показание
           </span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          Smart Meter Texas
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label="Smart Meter Texas"
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       {data.readingKwh !== null ? (

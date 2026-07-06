@@ -16,7 +16,18 @@ vi.mock('../services/waterSmart/types', () => ({
   getWaterSmartConfig: vi.fn().mockReturnValue(undefined),
 }));
 
+vi.mock('../services/waterSmart/sync', () => ({
+  getWaterSmartStatus: vi.fn().mockResolvedValue({
+    configured: false,
+    lastSync: null,
+    lastStatus: null,
+    lastError: null,
+    recordsCount: 0,
+  }),
+}));
+
 import { prisma } from '../lib/prisma';
+import { getWaterSmartStatus } from '../services/waterSmart/sync';
 import waterRouter from './water';
 
 function createApp() {
@@ -67,6 +78,8 @@ describe('GET /api/water/bills', () => {
     });
     expect(response.body).toEqual({
       connected: false,
+      syncStatus: null,
+      syncError: null,
       label: 'Вода (счет)',
       currency: 'USD',
       currentAmount: 216.29,
@@ -76,6 +89,22 @@ describe('GET /api/water/bills', () => {
         { month: '2026-06-01', amount: 216.29 },
       ],
     });
+  });
+
+  it('returns sync success status from the latest WaterSmart sync log', async () => {
+    vi.mocked(getWaterSmartStatus).mockResolvedValue({
+      configured: true,
+      lastSync: new Date('2026-07-05T12:00:00.000Z'),
+      lastStatus: 'success',
+      lastError: null,
+      recordsCount: 12,
+    });
+    vi.mocked(prisma.utilityReading.findMany).mockResolvedValue([]);
+
+    const response = await request(createApp()).get('/api/water/bills').expect(200);
+
+    expect(response.body.syncStatus).toBe('success');
+    expect(response.body.syncError).toBeNull();
   });
 
   it('returns empty readings when no bills exist', async () => {

@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { Droplets } from 'lucide-react';
 import type { WaterDailyData } from '../../types';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#3b82f6';
 
@@ -38,9 +39,12 @@ export default function WaterDailyCard({ data }: WaterDailyCardProps) {
           </div>
           <span className="text-sm font-medium text-gray-700">Вода (день)</span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? data.month : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label={data.month}
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       {chartData.length === 0 ? (

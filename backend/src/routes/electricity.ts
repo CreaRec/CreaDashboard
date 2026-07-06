@@ -9,8 +9,10 @@ import {
   yesterdayLocal,
 } from '../lib/timezone';
 import { endOfDay, formatUtilityMonth, startOfDay } from '../services/smartMeterTexas/transform';
-import { getSmtConfig, isSmtConfigured } from '../services/smartMeterTexas/types';
+import { getChampionStatus } from '../services/championEnergy/sync';
 import { isChampionConfigured } from '../services/championEnergy/types';
+import { getSmtStatus } from '../services/smartMeterTexas/sync';
+import { getSmtConfig, isSmtConfigured } from '../services/smartMeterTexas/types';
 
 const router = Router();
 const log = createLogger('electricity');
@@ -25,10 +27,13 @@ router.get('/monthly', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const smtStatus = await getSmtStatus();
 
     log.debug('Monthly readings loaded', { count: readings.length });
     res.json({
       connected: isSmtConfigured(),
+      syncStatus: smtStatus.lastStatus,
+      syncError: smtStatus.lastError,
       label: 'Электричество',
       unit: 'kWh',
       currency: 'USD',
@@ -90,9 +95,12 @@ router.get('/intervals', async (req, res) => {
     }
 
     const responseDate = formatLocalDate(date);
+    const smtStatus = await getSmtStatus();
     log.debug('Interval readings loaded', { count: readings.length, date: responseDate });
     res.json({
       connected: isSmtConfigured(),
+      syncStatus: smtStatus.lastStatus,
+      syncError: smtStatus.lastError,
       date: responseDate,
       unit: 'kWh',
       readings: readings.map((reading) => ({
@@ -112,6 +120,7 @@ router.get('/current', async (_req, res) => {
     const snapshot = await prisma.electricityMeterSnapshot.findFirst({
       orderBy: { readAt: 'desc' },
     });
+    const smtStatus = await getSmtStatus();
 
     log.debug('Current meter snapshot loaded', {
       esiid: snapshot?.esiid ?? null,
@@ -119,6 +128,8 @@ router.get('/current', async (_req, res) => {
     });
     res.json({
       connected: isSmtConfigured(),
+      syncStatus: smtStatus.lastStatus,
+      syncError: smtStatus.lastError,
       unit: 'kWh',
       readingKwh: snapshot?.readingKwh ?? null,
       readAt: snapshot?.readAt?.toISOString() ?? null,
@@ -142,10 +153,13 @@ router.get('/bills', async (_req, res) => {
     });
 
     const latest = readings[readings.length - 1];
+    const championStatus = await getChampionStatus();
 
     log.debug('Electricity bills loaded', { count: readings.length });
     res.json({
       connected: isChampionConfigured(),
+      syncStatus: championStatus.lastStatus,
+      syncError: championStatus.lastError,
       label: 'Электричество (счет)',
       currency: 'USD',
       currentAmount: latest?.cost ?? 0,

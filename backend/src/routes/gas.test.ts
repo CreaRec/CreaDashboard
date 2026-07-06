@@ -16,7 +16,18 @@ vi.mock('../services/atmosEnergy/types', () => ({
   getAtmosConfig: vi.fn().mockReturnValue(undefined),
 }));
 
+vi.mock('../services/atmosEnergy/sync', () => ({
+  getAtmosStatus: vi.fn().mockResolvedValue({
+    configured: false,
+    lastSync: null,
+    lastStatus: null,
+    lastError: null,
+    recordsCount: 0,
+  }),
+}));
+
 import { prisma } from '../lib/prisma';
+import { getAtmosStatus } from '../services/atmosEnergy/sync';
 import gasRouter from './gas';
 
 function createApp() {
@@ -60,6 +71,8 @@ describe('GET /api/gas/bills', () => {
     });
     expect(response.body).toEqual({
       connected: false,
+      syncStatus: null,
+      syncError: null,
       label: 'Газ (счет)',
       currency: 'USD',
       currentAmount: 52.18,
@@ -91,11 +104,29 @@ describe('GET /api/gas/monthly', () => {
 
     expect(response.body).toMatchObject({
       connected: false,
+      syncStatus: null,
+      syncError: null,
       label: 'Газ',
       unit: 'CCF',
       currency: 'USD',
       currentConsumption: 42.5,
       currentCost: 87.42,
     });
+  });
+
+  it('returns sync error status from the latest Atmos sync log', async () => {
+    vi.mocked(getAtmosStatus).mockResolvedValue({
+      configured: true,
+      lastSync: new Date('2026-07-05T12:00:00.000Z'),
+      lastStatus: 'error',
+      lastError: 'Login failed',
+      recordsCount: 0,
+    });
+    vi.mocked(prisma.utilityReading.findMany).mockResolvedValue([]);
+
+    const response = await request(createApp()).get('/api/gas/monthly').expect(200);
+
+    expect(response.body.syncStatus).toBe('error');
+    expect(response.body.syncError).toBe('Login failed');
   });
 });

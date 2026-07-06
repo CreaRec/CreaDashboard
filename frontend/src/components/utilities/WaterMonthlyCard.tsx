@@ -1,6 +1,7 @@
 import { Droplets } from 'lucide-react';
 import type { WaterMonthlyData } from '../../types';
 import ConsumptionChart from './ConsumptionChart';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#3b82f6';
 
@@ -21,9 +22,12 @@ export default function WaterMonthlyCard({ data }: WaterMonthlyCardProps) {
           </div>
           <span className="text-sm font-medium text-gray-700">{data.label}</span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? 'WaterSmart' : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label="WaterSmart"
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       <div className="mb-3 flex items-baseline gap-1">

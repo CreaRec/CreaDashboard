@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react';
 import type { ElectricityBillsData } from '../../types';
 import BillsChart from './BillsChart';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#f59e0b';
 
@@ -29,9 +30,12 @@ export default function ElectricityBillsCard({ data }: ElectricityBillsCardProps
           </div>
           <span className="text-sm font-medium text-gray-700">{data.label}</span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? 'Champion Energy' : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label="Champion Energy"
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       <div className="mb-3 flex items-baseline gap-1">

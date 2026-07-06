@@ -1,6 +1,7 @@
 import { Flame } from 'lucide-react';
 import type { GasBillsData } from '../../types';
 import BillsChart from './BillsChart';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#ef4444';
 
@@ -29,9 +30,12 @@ export default function GasBillsCard({ data }: GasBillsCardProps) {
           </div>
           <span className="text-sm font-medium text-gray-700">{data.label}</span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? 'Atmos Energy' : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label="Atmos Energy"
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       <div className="mb-3 flex items-baseline gap-1">

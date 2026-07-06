@@ -1,5 +1,13 @@
 export type UtilityType = 'electricity' | 'water' | 'gas';
 
+export type SyncStatus = 'success' | 'error' | 'skipped' | null;
+
+export interface IntegrationStatusFields {
+  connected: boolean;
+  syncStatus: SyncStatus;
+  syncError: string | null;
+}
+
 export type WidgetId =
   | 'electricityMonthly'
   | 'electricityBills'
@@ -36,8 +44,7 @@ export interface UtilityData {
   readings: UtilityReading[];
 }
 
-export interface ElectricityMonthlyData {
-  connected: boolean;
+export interface ElectricityMonthlyData extends IntegrationStatusFields {
   label: string;
   unit: string;
   currency: string;
@@ -52,8 +59,7 @@ export interface ElectricityBillPoint {
   amount: number;
 }
 
-export interface ElectricityBillsData {
-  connected: boolean;
+export interface ElectricityBillsData extends IntegrationStatusFields {
   label: string;
   currency: string;
   currentAmount: number;
@@ -65,15 +71,13 @@ export interface ElectricityIntervalPoint {
   kwh: number;
 }
 
-export interface ElectricityIntervalsData {
-  connected: boolean;
+export interface ElectricityIntervalsData extends IntegrationStatusFields {
   date: string;
   unit: string;
   readings: ElectricityIntervalPoint[];
 }
 
-export interface ElectricityCurrentData {
-  connected: boolean;
+export interface ElectricityCurrentData extends IntegrationStatusFields {
   unit: string;
   readingKwh: number | null;
   readAt: string | null;
@@ -85,8 +89,7 @@ export interface WaterDailyPoint {
   gallons: number;
 }
 
-export interface WaterDailyData {
-  connected: boolean;
+export interface WaterDailyData extends IntegrationStatusFields {
   month: string;
   unit: string;
   readings: WaterDailyPoint[];
@@ -97,16 +100,14 @@ export interface WaterBillPoint {
   amount: number;
 }
 
-export interface WaterBillsData {
-  connected: boolean;
+export interface WaterBillsData extends IntegrationStatusFields {
   label: string;
   currency: string;
   currentAmount: number;
   readings: WaterBillPoint[];
 }
 
-export interface WaterMonthlyData {
-  connected: boolean;
+export interface WaterMonthlyData extends IntegrationStatusFields {
   label: string;
   unit: string;
   currency: string;
@@ -129,16 +130,14 @@ export interface GasBillPoint {
   amount: number;
 }
 
-export interface GasBillsData {
-  connected: boolean;
+export interface GasBillsData extends IntegrationStatusFields {
   label: string;
   currency: string;
   currentAmount: number;
   readings: GasBillPoint[];
 }
 
-export interface GasMonthlyData {
-  connected: boolean;
+export interface GasMonthlyData extends IntegrationStatusFields {
   label: string;
   unit: string;
   currency: string;

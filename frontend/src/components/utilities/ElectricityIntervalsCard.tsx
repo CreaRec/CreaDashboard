@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { Zap } from 'lucide-react';
 import type { ElectricityIntervalsData } from '../../types';
+import IntegrationBadge from './IntegrationBadge';
 
 const COLOR = '#f59e0b';
 
@@ -44,9 +45,12 @@ export default function ElectricityIntervalsCard({
             Электричество (15 мин)
           </span>
         </div>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-          {data.connected ? data.date : 'Не подключено'}
-        </span>
+        <IntegrationBadge
+          connected={data.connected}
+          label={data.date}
+          syncStatus={data.syncStatus}
+          syncError={data.syncError}
+        />
       </div>
 
       {chartData.length === 0 ? (
