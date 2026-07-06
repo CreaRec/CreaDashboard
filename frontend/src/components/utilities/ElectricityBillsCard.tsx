@@ -38,6 +38,7 @@ export default function ElectricityBillsCard({ data }: ElectricityBillsCardProps
         <span className="text-2xl font-semibold text-gray-900">
           {formatAmount(data.currentAmount, data.currency)}
         </span>
+        <span className="text-sm text-gray-500">последний счёт</span>
       </div>
 
       {data.readings.length > 0 ? (
