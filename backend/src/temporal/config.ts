@@ -10,3 +10,6 @@ export const WATER_SYNC_SCHEDULED_WORKFLOW_ID = 'water-sync-scheduled';
 export const ATMOS_SYNC_SCHEDULE_ID = 'atmos-sync-schedule';
 export const ATMOS_SYNC_WORKFLOW = 'atmosSyncWorkflow';
 export const ATMOS_SYNC_SCHEDULED_WORKFLOW_ID = 'atmos-sync-scheduled';
+export const CHAMPION_SYNC_SCHEDULE_ID = 'champion-sync-schedule';
+export const CHAMPION_SYNC_WORKFLOW = 'championSyncWorkflow';
+export const CHAMPION_SYNC_SCHEDULED_WORKFLOW_ID = 'champion-sync-scheduled';

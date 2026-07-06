@@ -10,6 +10,7 @@ import {
 } from '../lib/timezone';
 import { endOfDay, formatUtilityMonth, startOfDay } from '../services/smartMeterTexas/transform';
 import { getSmtConfig, isSmtConfigured } from '../services/smartMeterTexas/types';
+import { isChampionConfigured } from '../services/championEnergy/types';
 
 const router = Router();
 const log = createLogger('electricity');
@@ -33,7 +34,9 @@ router.get('/monthly', async (_req, res) => {
       currency: 'USD',
       currentConsumption: latest?.consumption ?? 0,
       currentCost: latest?.cost ?? 0,
-      estimatedCost: config?.electricityRatePerKwh !== undefined,
+      estimatedCost: isChampionConfigured()
+        ? false
+        : config?.electricityRatePerKwh !== undefined,
       readings: readings.map((reading) => ({
         month: formatUtilityMonth(reading.month),
         consumption: reading.consumption,
@@ -124,6 +127,36 @@ router.get('/current', async (_req, res) => {
   } catch (error) {
     log.error('Failed to fetch current electricity reading', error);
     res.status(500).json({ error: 'Failed to fetch current electricity reading' });
+  }
+});
+
+router.get('/bills', async (_req, res) => {
+  log.debug('GET /bills');
+  try {
+    const readings = await prisma.utilityReading.findMany({
+      where: {
+        utilityType: UtilityType.electricity,
+        cost: { gt: 0 },
+      },
+      orderBy: { month: 'asc' },
+    });
+
+    const latest = readings[readings.length - 1];
+
+    log.debug('Electricity bills loaded', { count: readings.length });
+    res.json({
+      connected: isChampionConfigured(),
+      label: 'Электричество (счет)',
+      currency: 'USD',
+      currentAmount: latest?.cost ?? 0,
+      readings: readings.map((reading) => ({
+        month: formatUtilityMonth(reading.month),
+        amount: reading.cost,
+      })),
+    });
+  } catch (error) {
+    log.error('Failed to fetch electricity bills', error);
+    res.status(500).json({ error: 'Failed to fetch electricity bills' });
   }
 });
 

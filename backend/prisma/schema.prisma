@@ -9,6 +9,7 @@ datasource db {
 
 enum WidgetId {
   electricityMonthly
+  electricityBills
   electricityIntervals
   electricityCurrent
   waterMonthly
@@ -93,6 +94,14 @@ model WaterSyncLog {
 }
 
 model GasSyncLog {
+  id           String        @id @default(cuid())
+  status       SmtSyncStatus
+  syncedAt     DateTime      @default(now())
+  error        String?
+  recordsCount Int           @default(0)
+}
+
+model ChampionSyncLog {
   id           String        @id @default(cuid())
   status       SmtSyncStatus
   syncedAt     DateTime      @default(now())

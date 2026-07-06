@@ -50,6 +50,15 @@ export default function ElectricityMonthlyCard({ data }: ElectricityMonthlyCardP
         </p>
       )}
 
+      {!data.estimatedCost && data.currentCost > 0 && (
+        <p className="mb-3 text-sm text-gray-500">
+          Счет:{' '}
+          <span className="font-medium text-gray-700">
+            {formatCost(data.currentCost, data.currency)}
+          </span>
+        </p>
+      )}
+
       <ConsumptionChart data={data.readings} unit={data.unit} color={COLOR} />
     </div>
   );

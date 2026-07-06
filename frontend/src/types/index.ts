@@ -2,6 +2,7 @@ export type UtilityType = 'electricity' | 'water' | 'gas';
 
 export type WidgetId =
   | 'electricityMonthly'
+  | 'electricityBills'
   | 'electricityIntervals'
   | 'electricityCurrent'
   | 'waterMonthly'
@@ -44,6 +45,19 @@ export interface ElectricityMonthlyData {
   currentCost: number;
   estimatedCost: boolean;
   readings: UtilityReading[];
+}
+
+export interface ElectricityBillPoint {
+  month: string;
+  amount: number;
+}
+
+export interface ElectricityBillsData {
+  connected: boolean;
+  label: string;
+  currency: string;
+  currentAmount: number;
+  readings: ElectricityBillPoint[];
 }
 
 export interface ElectricityIntervalPoint {
@@ -142,6 +156,14 @@ export interface AtmosStatus {
   recordsCount: number;
 }
 
+export interface ChampionStatus {
+  configured: boolean;
+  lastSync: string | null;
+  lastStatus: string | null;
+  lastError: string | null;
+  recordsCount: number;
+}
+
 export interface SmtStatus {
   configured: boolean;
   lastSync: string | null;
@@ -178,6 +200,7 @@ export type UtilitiesMap = Record<UtilityType, UtilityData>;
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
   electricityMonthly: 'Электричество (месяц)',
+  electricityBills: 'Электричество (счет)',
   electricityIntervals: 'Электричество (15 мин)',
   electricityCurrent: 'Электричество (сейчас)',
   waterMonthly: 'Вода (месяц)',

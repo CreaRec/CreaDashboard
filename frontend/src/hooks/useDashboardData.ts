@@ -6,6 +6,7 @@ import {
   fetchUtilities,
 } from '../api/dashboard';
 import {
+  fetchElectricityBills,
   fetchElectricityCurrent,
   fetchElectricityIntervals,
   fetchElectricityMonthly,
@@ -19,6 +20,7 @@ import {
 import type {
   CalendarEvent,
   ElectricityCurrentData,
+  ElectricityBillsData,
   ElectricityIntervalsData,
   ElectricityMonthlyData,
   Note,
@@ -35,6 +37,7 @@ async function fetchAllDashboardData() {
   const [
     utilitiesData,
     monthlyData,
+    electricityBillsData,
     intervalsData,
     currentData,
     waterMonthlyData,
@@ -48,6 +51,7 @@ async function fetchAllDashboardData() {
   ] = await Promise.all([
     fetchUtilities(),
     fetchElectricityMonthly(),
+    fetchElectricityBills(),
     fetchElectricityIntervals(),
     fetchElectricityCurrent(),
     fetchWaterMonthly(),
@@ -63,6 +67,7 @@ async function fetchAllDashboardData() {
   return {
     utilities: utilitiesData,
     electricityMonthly: monthlyData,
+    electricityBills: electricityBillsData,
     electricityIntervals: intervalsData,
     electricityCurrent: currentData,
     waterMonthly: waterMonthlyData,
@@ -80,6 +85,7 @@ export function useDashboardData() {
   const [utilities, setUtilities] = useState<UtilitiesMap | null>(null);
   const [electricityMonthly, setElectricityMonthly] =
     useState<ElectricityMonthlyData | null>(null);
+  const [electricityBills, setElectricityBills] = useState<ElectricityBillsData | null>(null);
   const [electricityIntervals, setElectricityIntervals] =
     useState<ElectricityIntervalsData | null>(null);
   const [electricityCurrent, setElectricityCurrent] =
@@ -111,6 +117,7 @@ export function useDashboardData() {
         if (!cancelled) {
           setUtilities(data.utilities);
           setElectricityMonthly(data.electricityMonthly);
+          setElectricityBills(data.electricityBills);
           setElectricityIntervals(data.electricityIntervals);
           setElectricityCurrent(data.electricityCurrent);
           setWaterMonthly(data.waterMonthly);
@@ -156,6 +163,7 @@ export function useDashboardData() {
   return {
     utilities,
     electricityMonthly,
+    electricityBills,
     electricityIntervals,
     electricityCurrent,
     waterMonthly,

@@ -10,6 +10,7 @@ const listeners = new Set<DashboardEventListener>();
 let lastSeenSmtSyncedAt: Date | null = null;
 let lastSeenWaterSyncedAt: Date | null = null;
 let lastSeenGasSyncedAt: Date | null = null;
+let lastSeenChampionSyncedAt: Date | null = null;
 let syncWatcherStarted = false;
 
 export function subscribeDashboardEvents(listener: DashboardEventListener): () => void {
@@ -31,7 +32,7 @@ export function startSyncWatcher(pollMs = 15_000): void {
 
   setInterval(async () => {
     try {
-      const [latestSmt, latestWater, latestGas] = await Promise.all([
+      const [latestSmt, latestWater, latestGas, latestChampion] = await Promise.all([
         prisma.smtSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
           select: { syncedAt: true },
@@ -41,6 +42,10 @@ export function startSyncWatcher(pollMs = 15_000): void {
           select: { syncedAt: true },
         }),
         prisma.gasSyncLog.findFirst({
+          orderBy: { syncedAt: 'desc' },
+          select: { syncedAt: true },
+        }),
+        prisma.championSyncLog.findFirst({
           orderBy: { syncedAt: 'desc' },
           select: { syncedAt: true },
         }),
@@ -72,6 +77,14 @@ export function startSyncWatcher(pollMs = 15_000): void {
         shouldBroadcast = true;
       }
 
+      if (
+        latestChampion &&
+        lastSeenChampionSyncedAt !== null &&
+        latestChampion.syncedAt.getTime() !== lastSeenChampionSyncedAt.getTime()
+      ) {
+        shouldBroadcast = true;
+      }
+
       if (shouldBroadcast) {
         log.debug('New utility sync detected, broadcasting dashboard update');
         broadcastDashboardUpdate();
@@ -85,6 +98,9 @@ export function startSyncWatcher(pollMs = 15_000): void {
       }
       if (latestGas) {
         lastSeenGasSyncedAt = latestGas.syncedAt;
+      }
+      if (latestChampion) {
+        lastSeenChampionSyncedAt = latestChampion.syncedAt;
       }
     } catch (error) {
       log.error('Sync watcher failed', error);

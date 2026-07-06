@@ -7,6 +7,7 @@ import WaterMonthlyCard from '../components/utilities/WaterMonthlyCard';
 import WaterBillsCard from '../components/utilities/WaterBillsCard';
 import WaterDailyCard from '../components/utilities/WaterDailyCard';
 import ElectricityMonthlyCard from '../components/utilities/ElectricityMonthlyCard';
+import ElectricityBillsCard from '../components/utilities/ElectricityBillsCard';
 import ElectricityIntervalsCard from '../components/utilities/ElectricityIntervalsCard';
 import ElectricityCurrentCard from '../components/utilities/ElectricityCurrentCard';
 import CalendarWidget from '../components/calendar/CalendarWidget';
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const {
     utilities,
     electricityMonthly,
+    electricityBills,
     electricityIntervals,
     electricityCurrent,
     waterMonthly,
@@ -45,12 +47,13 @@ export default function DashboardPage() {
   } = useWidgetLayout();
 
   const widgets = useMemo(() => {
-    if (!utilities || !electricityMonthly || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily || !gasMonthly || !gasBills) {
+    if (!utilities || !electricityMonthly || !electricityBills || !electricityIntervals || !electricityCurrent || !waterMonthly || !waterBills || !waterDaily || !gasMonthly || !gasBills) {
       return null;
     }
 
     const registry: Record<WidgetId, React.ReactNode> = {
       electricityMonthly: <ElectricityMonthlyCard data={electricityMonthly} />,
+      electricityBills: <ElectricityBillsCard data={electricityBills} />,
       electricityIntervals: (
         <ElectricityIntervalsCard data={electricityIntervals} />
       ),
@@ -69,6 +72,7 @@ export default function DashboardPage() {
   }, [
     utilities,
     electricityMonthly,
+    electricityBills,
     electricityIntervals,
     electricityCurrent,
     waterMonthly,

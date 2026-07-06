@@ -15,6 +15,12 @@ export {
 } from './atmosSyncActivities';
 
 export {
+  checkChampionConfigured,
+  syncElectricityBillCosts,
+  logChampionSyncResult,
+} from './championSyncActivities';
+
+export {
   checkWaterSmartConfigured,
   resolveWaterAccount,
   syncWaterReadings,

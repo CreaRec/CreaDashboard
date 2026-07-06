@@ -11,6 +11,9 @@ vi.mock('./prisma', () => ({
     gasSyncLog: {
       findFirst: vi.fn(),
     },
+    championSyncLog: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -46,6 +49,7 @@ describe('realtime', () => {
     vi.mocked(prisma.smtSyncLog.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.waterSyncLog.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.gasSyncLog.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.championSyncLog.findFirst).mockResolvedValue(null);
     const { startSyncWatcher } = await import('./realtime');
     expect(typeof startSyncWatcher).toBe('function');
   });
