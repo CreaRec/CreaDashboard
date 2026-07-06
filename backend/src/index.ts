@@ -9,6 +9,9 @@ import layoutRouter from './routes/layout';
 import smtIntegrationRouter from './routes/integrations/smt';
 import { prisma } from './lib/prisma';
 import { createLogger, resolveLogLevel } from './lib/logger';
+import { ensureAppTimeZone } from './lib/timezone';
+
+ensureAppTimeZone();
 
 const log = createLogger('server');
 const app = express();

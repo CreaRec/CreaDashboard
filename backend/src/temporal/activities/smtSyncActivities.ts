@@ -1,6 +1,11 @@
 import { SmtSyncStatus, UtilityType } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { createLogger } from '../../lib/logger';
+import {
+  formatLocalDate,
+  todayLocal,
+  yesterdayLocal,
+} from '../../lib/timezone';
 import { createPortalClient } from '../../services/smartMeterTexas/portalClient';
 import { canRunOdrSync } from '../../services/smartMeterTexas/odrRateLimit';
 import { estimateCost } from '../../services/smartMeterTexas/transform';
@@ -11,12 +16,6 @@ import {
 } from '../../services/smartMeterTexas/types';
 
 const log = createLogger('smt-activities');
-
-function yesterday(): Date {
-  const date = new Date();
-  date.setDate(date.getDate() - 1);
-  return date;
-}
 
 function requireSmtConfig() {
   const config = getSmtConfig();
@@ -73,32 +72,36 @@ export async function syncMonthlyReadings(esiid: string): Promise<number> {
 export async function syncIntervalReadings(esiid: string): Promise<number> {
   const config = requireSmtConfig();
   const client = createPortalClient(config);
-  const intervalDate = yesterday();
-  const intervals = await client.fetchIntervals(esiid, intervalDate, intervalDate);
-  log.debug('Interval readings fetched', {
-    count: intervals.length,
-    date: intervalDate.toISOString().slice(0, 10),
-  });
+  const intervalDates = [yesterdayLocal(), todayLocal()];
 
   let recordsCount = 0;
-  for (const interval of intervals) {
-    await prisma.electricityIntervalReading.upsert({
-      where: {
-        esiid_timestamp: {
+  for (const intervalDate of intervalDates) {
+    const intervals = await client.fetchIntervals(esiid, intervalDate, intervalDate);
+    const dateLabel = formatLocalDate(intervalDate);
+    log.debug('Interval readings fetched', {
+      count: intervals.length,
+      date: dateLabel,
+    });
+
+    for (const interval of intervals) {
+      await prisma.electricityIntervalReading.upsert({
+        where: {
+          esiid_timestamp: {
+            esiid,
+            timestamp: interval.timestamp,
+          },
+        },
+        update: {
+          kwh: interval.kwh,
+        },
+        create: {
           esiid,
           timestamp: interval.timestamp,
+          kwh: interval.kwh,
         },
-      },
-      update: {
-        kwh: interval.kwh,
-      },
-      create: {
-        esiid,
-        timestamp: interval.timestamp,
-        kwh: interval.kwh,
-      },
-    });
-    recordsCount += 1;
+      });
+      recordsCount += 1;
+    }
   }
 
   return recordsCount;

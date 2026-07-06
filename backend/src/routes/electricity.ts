@@ -2,6 +2,12 @@ import { Router } from 'express';
 import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
+import {
+  formatLocalDate,
+  parseLocalDate,
+  todayLocal,
+  yesterdayLocal,
+} from '../lib/timezone';
 import { endOfDay, formatUtilityMonth, startOfDay } from '../services/smartMeterTexas/transform';
 import { getSmtConfig, isSmtConfigured } from '../services/smartMeterTexas/types';
 
@@ -45,13 +51,19 @@ router.get('/intervals', async (req, res) => {
   log.debug('GET /intervals', { date: dateParam ?? 'today' });
 
   try {
-    const date = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date();
-    if (Number.isNaN(date.getTime())) {
-      res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
-      return;
+    let date: Date;
+    if (dateParam) {
+      try {
+        date = parseLocalDate(dateParam);
+      } catch {
+        res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+        return;
+      }
+    } else {
+      date = todayLocal();
     }
 
-    const readings = await prisma.electricityIntervalReading.findMany({
+    let readings = await prisma.electricityIntervalReading.findMany({
       where: {
         timestamp: {
           gte: startOfDay(date),
@@ -61,10 +73,24 @@ router.get('/intervals', async (req, res) => {
       orderBy: { timestamp: 'asc' },
     });
 
-    log.debug('Interval readings loaded', { count: readings.length, date: date.toISOString().slice(0, 10) });
+    if (!dateParam && readings.length === 0) {
+      date = yesterdayLocal();
+      readings = await prisma.electricityIntervalReading.findMany({
+        where: {
+          timestamp: {
+            gte: startOfDay(date),
+            lte: endOfDay(date),
+          },
+        },
+        orderBy: { timestamp: 'asc' },
+      });
+    }
+
+    const responseDate = formatLocalDate(date);
+    log.debug('Interval readings loaded', { count: readings.length, date: responseDate });
     res.json({
       connected: isSmtConfigured(),
-      date: date.toISOString().slice(0, 10),
+      date: responseDate,
       unit: 'kWh',
       readings: readings.map((reading) => ({
         timestamp: reading.timestamp.toISOString(),

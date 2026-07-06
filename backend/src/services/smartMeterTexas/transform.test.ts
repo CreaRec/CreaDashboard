@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   authResponse,
   intervalResponse,
@@ -16,8 +16,17 @@ import {
   parseMonthDate,
   parseOdrResponse,
 } from './transform';
+import { getLocalDateParts } from '../../lib/timezone';
 
 describe('transform', () => {
+  beforeEach(() => {
+    process.env.APP_TIMEZONE = 'America/Chicago';
+  });
+
+  afterEach(() => {
+    delete process.env.APP_TIMEZONE;
+  });
+
   it('parses meters response', () => {
     const meters = parseMetersResponse(metersResponse);
     expect(meters).toHaveLength(1);
@@ -46,9 +55,13 @@ describe('transform', () => {
     expect(intervals).toHaveLength(4);
     expect(intervals[0].kwh).toBe(0.155);
     expect(intervals[0].timestamp).toBeInstanceOf(Date);
-    expect(intervals[0].timestamp.getFullYear()).toBe(2026);
-    expect(intervals[0].timestamp.getMonth()).toBe(6);
-    expect(intervals[0].timestamp.getDate()).toBe(4);
+    expect(getLocalDateParts(intervals[0].timestamp)).toMatchObject({
+      year: 2026,
+      month: 7,
+      day: 4,
+      hour: 0,
+      minute: 0,
+    });
   });
 
   it('parses interval response with ISO dates', () => {
@@ -60,9 +73,13 @@ describe('transform', () => {
     });
     expect(intervals).toHaveLength(2);
     expect(intervals[0].kwh).toBe(0.385);
-    expect(intervals[0].timestamp.getHours()).toBe(0);
-    expect(intervals[0].timestamp.getMinutes()).toBe(0);
-    expect(intervals[1].timestamp.getMinutes()).toBe(15);
+    expect(getLocalDateParts(intervals[0].timestamp)).toMatchObject({
+      hour: 0,
+      minute: 0,
+    });
+    expect(getLocalDateParts(intervals[1].timestamp)).toMatchObject({
+      minute: 15,
+    });
   });
 
   it('parses completed ODR response', () => {
@@ -86,8 +103,9 @@ describe('transform', () => {
     expect(parseMonthDate('2026-07')).toEqual(new Date(Date.UTC(2026, 6, 1)));
   });
 
-  it('formats utility months for API responses', () => {
+  it('formats utility months from PostgreSQL DATE values', () => {
     expect(formatUtilityMonth(new Date(Date.UTC(2026, 3, 1)))).toBe('2026-04-01');
+    expect(formatUtilityMonth('2026-04')).toBe('2026-04-01');
   });
 
   it('ignores auth response shape without throwing', () => {
