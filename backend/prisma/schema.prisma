@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WidgetId {
+  electricity
+  water
+  gas
+  calendar
+  reminders
+  notes
+}
+
+enum UtilityType {
+  electricity
+  water
+  gas
+}
+
+model WidgetLayout {
+  widgetId  WidgetId @id
+  position  Int      @unique
+  updatedAt DateTime @updatedAt
+}
+
+model UtilityReading {
+  id          String      @id @default(cuid())
+  utilityType UtilityType
+  month       String
+  consumption Float
+  cost        Float
+
+  @@unique([utilityType, month])
+}
+
+model CalendarEvent {
+  id     String    @id @default(cuid())
+  title  String
+  start  DateTime
+  end    DateTime?
+  source String
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  title     String
+  dueDate   DateTime @db.Date
+  priority  String
+  completed Boolean  @default(false)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  color     String
+  updatedAt DateTime @db.Date
+}
