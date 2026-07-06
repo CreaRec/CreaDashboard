@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   authResponse,
   intervalResponse,
@@ -7,6 +7,7 @@ import {
   odrCompletedResponse,
   odrPendingResponse,
 } from '../../mocks/smtResponses';
+import { localDateTimeToDate } from '../../lib/timezone';
 import { SMT_API_BASE, SMT_AUTH_ENDPOINT } from './types';
 import { createPortalClient } from './portalClient';
 
@@ -24,7 +25,12 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe('portalClient', () => {
+  beforeEach(() => {
+    process.env.APP_TIMEZONE = 'America/Chicago';
+  });
+
   afterEach(() => {
+    delete process.env.APP_TIMEZONE;
     vi.restoreAllMocks();
   });
 
@@ -87,13 +93,13 @@ describe('portalClient', () => {
     const client = createPortalClient(config, fetchMock as typeof fetch);
     const monthly = await client.fetchMonthly(
       '10443720012345678',
-      new Date(2026, 0, 1),
-      new Date(2026, 6, 1)
+      localDateTimeToDate(2026, 1, 1),
+      localDateTimeToDate(2026, 7, 1)
     );
     const intervals = await client.fetchIntervals(
       '10443720012345678',
-      new Date(2026, 6, 4),
-      new Date(2026, 6, 4)
+      localDateTimeToDate(2026, 7, 4),
+      localDateTimeToDate(2026, 7, 4)
     );
 
     expect(monthly).toHaveLength(6);

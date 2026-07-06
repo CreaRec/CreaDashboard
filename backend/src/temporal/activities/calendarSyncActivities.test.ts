@@ -4,19 +4,19 @@ vi.mock('../../lib/realtime', () => ({
   broadcastDashboardUpdate: vi.fn(),
 }));
 
-vi.mock('../../services/appleCalendar/sync', () => ({
+vi.mock('../../services/appleCalendar/types', () => ({
   isAppleCalendarConfigured: vi.fn(),
+}));
+
+vi.mock('../../services/appleCalendar/sync', () => ({
   syncCalendarEvents: vi.fn(),
   logCalendarSyncResult: vi.fn(),
 }));
 
 import { SmtSyncStatus } from '@prisma/client';
 import { broadcastDashboardUpdate } from '../../lib/realtime';
-import {
-  isAppleCalendarConfigured,
-  logCalendarSyncResult,
-  syncCalendarEvents,
-} from '../../services/appleCalendar/sync';
+import { isAppleCalendarConfigured } from '../../services/appleCalendar/types';
+import { logCalendarSyncResult, syncCalendarEvents } from '../../services/appleCalendar/sync';
 import {
   checkAppleCalendarConfigured,
   logCalendarSyncActivityResult,
