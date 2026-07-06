@@ -3,7 +3,7 @@ import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
 import { isSmtConfigured } from '../services/smartMeterTexas/types';
-import { sortMonthlyReadings } from '../services/smartMeterTexas/transform';
+import { formatUtilityMonth } from '../services/smartMeterTexas/transform';
 
 const router = Router();
 const log = createLogger('utilities');
@@ -20,8 +20,9 @@ const utilityMeta: Record<
 router.get('/', async (_req, res) => {
   log.debug('GET /');
   try {
-    const readings = await prisma.utilityReading.findMany();
-    const sortedReadings = sortMonthlyReadings(readings);
+    const readings = await prisma.utilityReading.findMany({
+      orderBy: [{ utilityType: 'asc' }, { month: 'asc' }],
+    });
 
     const result: Record<
       string,
@@ -38,7 +39,7 @@ router.get('/', async (_req, res) => {
     > = {};
 
     for (const type of Object.values(UtilityType)) {
-      const typeReadings = sortedReadings.filter((r) => r.utilityType === type);
+      const typeReadings = readings.filter((r) => r.utilityType === type);
       const latest = typeReadings[typeReadings.length - 1];
       const meta = utilityMeta[type];
 
@@ -51,14 +52,14 @@ router.get('/', async (_req, res) => {
         currentConsumption: latest?.consumption ?? 0,
         currentCost: latest?.cost ?? 0,
         readings: typeReadings.map((r) => ({
-          month: r.month,
+          month: formatUtilityMonth(r.month),
           consumption: r.consumption,
           cost: r.cost,
         })),
       };
     }
 
-    log.debug('Utilities loaded', { readingCount: sortedReadings.length });
+    log.debug('Utilities loaded', { readingCount: readings.length });
     res.json(result);
   } catch (error) {
     log.error('Failed to fetch utilities', error);

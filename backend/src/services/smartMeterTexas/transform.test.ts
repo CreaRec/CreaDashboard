@@ -9,13 +9,12 @@ import {
 } from '../../mocks/smtResponses';
 import {
   estimateCost,
-  formatMonthLabel,
+  formatUtilityMonth,
   parseIntervalResponse,
   parseMetersResponse,
   parseMonthlyResponse,
-  parseMonthKey,
+  parseMonthDate,
   parseOdrResponse,
-  sortMonthlyReadings,
 } from './transform';
 
 describe('transform', () => {
@@ -29,7 +28,7 @@ describe('transform', () => {
   it('parses monthly response', () => {
     const monthly = parseMonthlyResponse(monthlyResponse);
     expect(monthly).toHaveLength(6);
-    expect(monthly[0].month).toBe('2026-01');
+    expect(monthly[0].month).toEqual(new Date(Date.UTC(2026, 0, 1)));
     expect(monthly[0].consumption).toBe(298);
   });
 
@@ -38,7 +37,7 @@ describe('transform', () => {
       monthlyData: [{ date: '02/01/2026', reading: 298 }],
     });
     expect(monthly).toHaveLength(1);
-    expect(monthly[0].month).toBe('2026-02');
+    expect(monthly[0].month).toEqual(new Date(Date.UTC(2026, 1, 1)));
     expect(monthly[0].consumption).toBe(298);
   });
 
@@ -81,24 +80,14 @@ describe('transform', () => {
     expect(estimateCost(100)).toBe(0);
   });
 
-  it('sorts monthly readings chronologically', () => {
-    const sorted = sortMonthlyReadings([
-      { month: 'Apr', consumption: 1 },
-      { month: '2026-07', consumption: 2 },
-      { month: 'Jan', consumption: 3 },
-    ]);
-
-    expect(sorted.map((reading) => reading.month)).toEqual(['Jan', 'Apr', '2026-07']);
+  it('parses month dates as first day of month in UTC', () => {
+    expect(parseMonthDate('04/30/2026')).toEqual(new Date(Date.UTC(2026, 3, 1)));
+    expect(parseMonthDate('2026-07-04')).toEqual(new Date(Date.UTC(2026, 6, 1)));
+    expect(parseMonthDate('2026-07')).toEqual(new Date(Date.UTC(2026, 6, 1)));
   });
 
-  it('formats month keys for chart labels', () => {
-    expect(formatMonthLabel('2026-04')).toBe('Apr');
-    expect(formatMonthLabel('Apr')).toBe('Apr');
-  });
-
-  it('parses month keys from slash and ISO dates', () => {
-    expect(parseMonthKey('04/30/2026')).toBe('2026-04');
-    expect(parseMonthKey('2026-07-04')).toBe('2026-07');
+  it('formats utility months for API responses', () => {
+    expect(formatUtilityMonth(new Date(Date.UTC(2026, 3, 1)))).toBe('2026-04-01');
   });
 
   it('ignores auth response shape without throwing', () => {

@@ -40,7 +40,7 @@ export interface SmtMeter {
 }
 
 export interface SmtMonthlyReading {
-  month: string;
+  month: Date;
   consumption: number;
 }
 

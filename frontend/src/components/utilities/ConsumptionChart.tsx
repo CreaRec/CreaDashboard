@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { formatMonthLabel, monthSortKey } from '../../lib/formatMonth';
+import { formatMonthLabel } from '../../lib/formatMonth';
 import type { UtilityReading } from '../../types';
 
 interface ConsumptionChartProps {
@@ -24,7 +24,7 @@ export default function ConsumptionChart({
   const chartData = useMemo(
     () =>
       [...data]
-        .sort((a, b) => monthSortKey(a.month).localeCompare(monthSortKey(b.month)))
+        .sort((a, b) => a.month.localeCompare(b.month))
         .map((reading) => ({
           ...reading,
           monthLabel: formatMonthLabel(reading.month),

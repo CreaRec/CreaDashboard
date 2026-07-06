@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { UtilityType } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { createLogger } from '../lib/logger';
-import { endOfDay, sortMonthlyReadings, startOfDay } from '../services/smartMeterTexas/transform';
+import { endOfDay, formatUtilityMonth, startOfDay } from '../services/smartMeterTexas/transform';
 import { getSmtConfig, isSmtConfigured } from '../services/smartMeterTexas/types';
 
 const router = Router();
@@ -12,11 +12,10 @@ router.get('/monthly', async (_req, res) => {
   log.debug('GET /monthly');
   try {
     const config = getSmtConfig();
-    const readings = sortMonthlyReadings(
-      await prisma.utilityReading.findMany({
-        where: { utilityType: UtilityType.electricity },
-      })
-    );
+    const readings = await prisma.utilityReading.findMany({
+      where: { utilityType: UtilityType.electricity },
+      orderBy: { month: 'asc' },
+    });
 
     const latest = readings[readings.length - 1];
 
@@ -30,7 +29,7 @@ router.get('/monthly', async (_req, res) => {
       currentCost: latest?.cost ?? 0,
       estimatedCost: config?.electricityRatePerKwh !== undefined,
       readings: readings.map((reading) => ({
-        month: reading.month,
+        month: formatUtilityMonth(reading.month),
         consumption: reading.consumption,
         cost: reading.cost,
       })),

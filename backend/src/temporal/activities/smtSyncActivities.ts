@@ -67,13 +67,6 @@ export async function syncMonthlyReadings(esiid: string): Promise<number> {
     recordsCount += 1;
   }
 
-  await prisma.utilityReading.deleteMany({
-    where: {
-      utilityType: UtilityType.electricity,
-      NOT: { month: { contains: '-' } },
-    },
-  });
-
   return recordsCount;
 }
 
