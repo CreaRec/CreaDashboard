@@ -18,6 +18,8 @@ npm run dev
 - Backend API: http://localhost:3001
 - Temporal UI (dev): http://localhost:8080
 
+Local Postgres/Temporal: `npm run db:up` (uses [`docker-compose.yml`](docker-compose.yml)).
+
 ## Testing
 
 ```bash
@@ -28,96 +30,46 @@ npm test
 
 ```
 CreaDashboard/
-├── frontend/   # React dashboard UI
-├── backend/    # Express API + Temporal worker
-├── deploy/     # systemd units + nginx config templates
-└── scripts/    # dev setup and deploy scripts
+├── frontend/              # React dashboard UI
+├── backend/               # Express API + Temporal worker
+├── deploy/nginx/          # nginx config for the web container
+├── docs/                  # Docker / server notes
+├── scripts/               # local dev helpers
+├── Dockerfile.backend     # API + worker + migrate image
+├── Dockerfile.web         # nginx + frontend image
+├── docker-compose.yml     # local infra only
+└── docker-compose.prod.yml  # full production stack
 ```
 
 ## Deployment (Debian server, LAN-only)
 
-The API and Temporal worker run as native **systemd** services; Postgres, Temporal server,
-and Temporal UI run in Docker. The dashboard is served by nginx bound to the local network IP
-only — not exposed on the public internet.
+Production is fully Dockerized: API, Temporal worker, migrate, web (nginx),
+Postgres, Temporal server, and Temporal UI. Releases go through GHCR; GitHub
+Actions runs `docker compose pull && up -d` on the server.
 
 | Service | URL |
 |---------|-----|
 | Dashboard | http://192.168.1.135:3080 |
 | Temporal UI | http://192.168.1.135:8080 |
 
-```bash
-# from your dev machine (LAN)
-./scripts/deploy.sh
-
-# via public hostname (SSH only — used by GitHub Actions)
-./scripts/deploy.sh --remote
-```
-
-Override any of: `SERVER_HOST`, `SSH_USER`, `REMOTE_APP_DIR`, `API_SERVICE_NAME`,
-`WORKER_SERVICE_NAME`, `DASHBOARD_HTTP_PORT`, `TEMPORAL_UI_HTTP_PORT`, `LAN_BIND_IP`.
-
-Set optional `DEPLOY_PASSWORD` in local `.env` (or export it) to skip SSH/sudo prompts during
-deploy; you need `sshpass` installed locally. When `DEPLOY_PASSWORD` is unset, deploy asks for
-passwords interactively.
-
-The deploy script reuses one SSH connection and one `sudo` session on the server. For zero
-prompts, use SSH keys and passwordless sudo for the deploy user, or `DEPLOY_PASSWORD` with
-`sshpass`.
-
-Make sure `backend/.env` exists in `REMOTE_APP_DIR` on the server (the deploy script never
-overwrites it). Production values should include:
-
-```
-DATABASE_URL=postgresql://crea:<password>@127.0.0.1:5435/crea_dashboard
-TEMPORAL_ADDRESS=127.0.0.1:7233
-PORT=3001
-NODE_ENV=production
-LOG_LEVEL=info
-```
-
-The Postgres password in `DATABASE_URL` must match `POSTGRES_PASSWORD` used by
-`docker-compose.prod.yml` (set via environment or defaults).
+See [docs/docker.md](docs/docker.md) for bootstrap, `.env`, cutover from systemd,
+and day-to-day commands.
 
 ### GitHub Actions CI/CD
 
-Merging into `main` triggers an automatic deploy via [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
+**On every push and pull request:** `npm ci`, `npm test`, and smoke-build both
+Docker images (no push).
 
-**On every push and pull request:** the `test` job runs `npm ci` and `npm test`.
+**On push to `main` only:** publish both images to GHCR (`main` + `sha-<short>`),
+SCP `docker-compose.prod.yml`, update `IMAGE_TAG`, then `pull && up -d`.
 
-**On push to `main` only:** the `deploy` job runs after tests pass:
-
-1. Writes the deploy SSH private key from GitHub Secrets
-2. Opens an SSH ControlMaster socket authenticated with that key
-3. Calls `./scripts/deploy.sh --remote`, which rsyncs the project and runs the remote build
-
-Required GitHub Secrets (Settings → Secrets and variables → Actions):
+Required GitHub Secrets:
 
 | Secret | Purpose |
 |--------|---------|
-| `DEPLOY_SSH_KEY` | Private deploy key (matching the public key in server `authorized_keys`) |
-| `DEPLOY_HOST` | Server hostname, for example `crearec.app` |
-| `DEPLOY_USER` | SSH user, for example `crearec` |
+| `DEPLOY_SSH_KEY` | Private deploy key |
+| `DEPLOY_HOST` | Server hostname |
+| `DEPLOY_USER` | SSH user |
 
-These are the same secrets used by TripPlanner.
-
-**Server prerequisites for CI deploy** (one-time setup):
-
-- Public deploy key in `~/.ssh/authorized_keys` for the deploy user
-- Passwordless sudo for deploy commands. **The sudoers username must match `DEPLOY_USER` exactly.**
-
-  ```sh
-  DEPLOY_USER=crearec
-  sudo tee "/etc/sudoers.d/${DEPLOY_USER}-deploy" > /dev/null <<EOF
-  ${DEPLOY_USER} ALL=(ALL) NOPASSWD: /bin/cp, /usr/bin/cp, /bin/mkdir, /usr/bin/mkdir, /bin/systemctl, /usr/bin/systemctl, /usr/bin/journalctl, /usr/sbin/nginx, /usr/bin/nginx
-  EOF
-  sudo chmod 440 "/etc/sudoers.d/${DEPLOY_USER}-deploy"
-  sudo visudo -c -f "/etc/sudoers.d/${DEPLOY_USER}-deploy"
-  ```
-
-- Node.js 20+ and npm on the server
-- Deploy user in the `docker` group (for `docker compose up -d`)
-- Remote `backend/.env` in `/home/crearec/crea-dashboard/backend/.env`
-
-`DEPLOY_PASSWORD` is not used in CI. The workflow never overwrites `backend/.env` on the server.
-
-Prisma migrations are applied during deploy (`npm run db:migrate`), not on every service restart.
+Actions never overwrites the server `.env` except `IMAGE_TAG`. Prisma migrations
+run via the one-shot `migrate` compose service (`prisma migrate deploy`).

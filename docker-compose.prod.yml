@@ -45,3 +45,62 @@ services:
       TEMPORAL_CORS_ORIGINS: ${TEMPORAL_CORS_ORIGIN:-http://192.168.1.135:8080}
     ports:
       - "${LAN_BIND_IP:-192.168.1.135}:${TEMPORAL_UI_HTTP_PORT:-8080}:8080"
+
+  migrate:
+    image: ${IMAGE:-ghcr.io/crearec/crea-dashboard}:${IMAGE_TAG:-main}
+    container_name: crea-dashboard-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crea}:${POSTGRES_PASSWORD:-crea}@postgres:5432/${POSTGRES_DB:-crea_dashboard}
+    command: ["npx", "prisma", "migrate", "deploy"]
+
+  api:
+    image: ${IMAGE:-ghcr.io/crearec/crea-dashboard}:${IMAGE_TAG:-main}
+    container_name: crea-dashboard-api
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crea}:${POSTGRES_PASSWORD:-crea}@postgres:5432/${POSTGRES_DB:-crea_dashboard}
+      TEMPORAL_ADDRESS: temporal:7233
+    expose:
+      - "3001"
+
+  worker:
+    image: ${IMAGE:-ghcr.io/crearec/crea-dashboard}:${IMAGE_TAG:-main}
+    container_name: crea-dashboard-worker
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crea}:${POSTGRES_PASSWORD:-crea}@postgres:5432/${POSTGRES_DB:-crea_dashboard}
+      TEMPORAL_ADDRESS: temporal:7233
+    command: ["node", "dist/temporal/worker.js"]
+
+  web:
+    image: ${WEB_IMAGE:-ghcr.io/crearec/crea-dashboard-web}:${IMAGE_TAG:-main}
+    container_name: crea-dashboard-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${LAN_BIND_IP:-192.168.1.135}:${DASHBOARD_HTTP_PORT:-3080}:80"

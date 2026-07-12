@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-# Shared helpers for the CreaDashboard scripts.
+# Shared helpers for local CreaDashboard scripts.
 
 set -euo pipefail
 
@@ -33,12 +32,6 @@ compose() {
   fi
 }
 
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
-
-compose_prod() {
-  compose -f "$COMPOSE_FILE" "$@"
-}
-
 require_docker() {
   if ! command -v docker >/dev/null 2>&1; then
     err "docker is not installed or not on PATH."
@@ -49,32 +42,4 @@ require_docker() {
     exit 1
   fi
   ok "Docker daemon is running."
-}
-
-wait_postgres_healthy() {
-  local cid
-  cid="$(compose_prod ps -q postgres)"
-  if [ -z "$cid" ]; then
-    err "Could not find the 'postgres' container."
-    exit 1
-  fi
-  log "Waiting for Postgres to become healthy..."
-  for _ in $(seq 1 60); do
-    local status
-    status="$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null || echo "starting")"
-    if [ "$status" = "healthy" ]; then
-      ok "Postgres is healthy."
-      return 0
-    fi
-    sleep 2
-  done
-  err "Postgres did not become healthy in time."
-  compose_prod logs --tail 50 postgres || true
-  exit 1
-}
-
-ensure_prod_containers() {
-  log "Ensuring production containers are up..."
-  compose_prod up -d
-  wait_postgres_healthy
 }

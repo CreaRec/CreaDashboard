@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  IMAGE: ghcr.io/crearec/crea-dashboard
+  WEB_IMAGE: ghcr.io/crearec/crea-dashboard-web
+  DEPLOY_DIR: /home/crearec/crea-dashboard
+  COMPOSE_FILE: docker-compose.prod.yml
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,9 +25,82 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  deploy:
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: false
+          tags: ${{ env.IMAGE }}:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build web image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.web
+          push: false
+          tags: ${{ env.WEB_IMAGE }}:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  publish:
     runs-on: ubuntu-latest
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image tags
+        id: meta
+        run: |
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          echo "image_tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:main
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.image_tag }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build and push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.web
+          push: true
+          tags: |
+            ${{ env.WEB_IMAGE }}:main
+            ${{ env.WEB_IMAGE }}:${{ steps.meta.outputs.image_tag }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: publish
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
@@ -33,14 +112,43 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy
+      - name: Deploy compose pull/up
         env:
           SSH_USER: ${{ secrets.DEPLOY_USER }}
           SERVER_HOST: ${{ secrets.DEPLOY_HOST }}
-          SSH_CONTROL_PATH: /tmp/dashboard-deploy-${{ secrets.DEPLOY_USER }}-${{ secrets.DEPLOY_HOST }}
+          IMAGE_TAG: ${{ needs.publish.outputs.image_tag }}
         run: |
+          set -euo pipefail
           SSH_TARGET="${SSH_USER}@${SERVER_HOST}"
-          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes \
-            -M -S "$SSH_CONTROL_PATH" -fnNT "$SSH_TARGET"
-          trap 'ssh -S "$SSH_CONTROL_PATH" -O exit "$SSH_TARGET" 2>/dev/null || true' EXIT
-          ./scripts/deploy.sh --remote
+          SSH=(ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes)
+          SCP=(scp -i ~/.ssh/deploy_key -o IdentitiesOnly=yes)
+
+          "${SSH[@]}" "$SSH_TARGET" "mkdir -p '${DEPLOY_DIR}/data'"
+          "${SCP[@]}" "${COMPOSE_FILE}" "${SSH_TARGET}:${DEPLOY_DIR}/${COMPOSE_FILE}"
+
+          "${SSH[@]}" "$SSH_TARGET" bash -s <<EOF
+          set -euo pipefail
+          cd '${DEPLOY_DIR}'
+
+          if [ ! -f .env ]; then
+            echo "ERROR: ${DEPLOY_DIR}/.env is missing. Bootstrap it from .env.example (IMAGE, WEB_IMAGE, IMAGE_TAG, secrets)." >&2
+            exit 1
+          fi
+
+          for svc in crea-dashboard-api crea-dashboard-worker; do
+            if [ -f "/etc/systemd/system/\${svc}.service" ] || systemctl list-unit-files "\${svc}.service" 2>/dev/null | grep -q "\${svc}"; then
+              sudo systemctl disable --now "\${svc}" || true
+            fi
+          done
+
+          if grep -q '^IMAGE_TAG=' .env; then
+            sed -i.bak "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env && rm -f .env.bak
+          else
+            printf '\nIMAGE_TAG=%s\n' "${IMAGE_TAG}" >> .env
+          fi
+
+          docker compose -f '${COMPOSE_FILE}' pull
+          docker compose -f '${COMPOSE_FILE}' up -d --remove-orphans
+          docker compose -f '${COMPOSE_FILE}' ps
+          docker compose -f '${COMPOSE_FILE}' logs --tail=40
+          EOF
