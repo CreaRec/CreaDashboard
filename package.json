@@ -2,6 +2,9 @@
   "name": "crea-dashboard",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "workspaces": [
     "frontend",
     "backend"
@@ -15,7 +18,7 @@
     "test": "npm run test -w backend && npm run test:scripts",
     "db:up": "docker compose up -d",
     "db:migrate": "npm run db:migrate:deploy -w backend",
-    "test:scripts": "node --test scripts/dev-servers.test.js scripts/compose-prod.test.js"
+    "test:scripts": "node --test scripts/dev-servers.test.js scripts/compose-prod.test.js scripts/node-version.test.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
