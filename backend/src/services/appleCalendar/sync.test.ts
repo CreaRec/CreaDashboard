@@ -36,15 +36,21 @@ import {
   syncCalendarEvents,
 } from './sync';
 
-const TIMED_EVENT = `BEGIN:VCALENDAR
+function toIcalUtc(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function buildTimedEventIcal(start: Date, end: Date): string {
+  return `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
 UID:event-1
-DTSTART:20260710T150000Z
-DTEND:20260710T160000Z
+DTSTART:${toIcalUtc(start)}
+DTEND:${toIcalUtc(end)}
 SUMMARY:Team meeting
 END:VEVENT
 END:VCALENDAR`;
+}
 
 describe('getAppleCalendarSyncStatus', () => {
   beforeEach(() => {
@@ -93,8 +99,16 @@ describe('syncCalendarEvents', () => {
   });
 
   it('upserts parsed events and prunes stale rows on time-range fallback', async () => {
+    const eventStart = new Date(Date.now() + 60 * 60 * 1000);
+    const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000);
+
     vi.mocked(fetchCalendarEvents).mockResolvedValue({
-      objects: [{ data: TIMED_EVENT, url: 'https://caldav.icloud.com/home/event-1.ics' }],
+      objects: [
+        {
+          data: buildTimedEventIcal(eventStart, eventEnd),
+          url: 'https://caldav.icloud.com/home/event-1.ics',
+        },
+      ],
       deletedObjects: [],
       syncToken: 'token-1',
       usedTimeRangeFallback: true,
@@ -127,6 +141,9 @@ describe('syncCalendarEvents', () => {
   });
 
   it('deletes cancelled events without upserting them', async () => {
+    const eventStart = new Date(Date.now() + 60 * 60 * 1000);
+    const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000);
+
     vi.mocked(fetchCalendarEvents).mockResolvedValue({
       objects: [
         {
@@ -134,8 +151,8 @@ describe('syncCalendarEvents', () => {
 VERSION:2.0
 BEGIN:VEVENT
 UID:event-cancelled
-DTSTART:20260710T150000Z
-DTEND:20260710T160000Z
+DTSTART:${toIcalUtc(eventStart)}
+DTEND:${toIcalUtc(eventEnd)}
 SUMMARY:Cancelled
 STATUS:CANCELLED
 END:VEVENT
