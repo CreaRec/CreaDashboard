@@ -61,15 +61,17 @@ and day-to-day commands.
 Docker images (no push).
 
 **On push to `main` only:** publish both images to GHCR (`main` + `sha-<short>`),
-SCP `docker-compose.prod.yml`, update `IMAGE_TAG`, then `pull && up -d`.
+join Tailscale (`tag:ci`), SCP `docker-compose.prod.yml`, update `IMAGE_TAG`, then `pull && up -d`.
 
 Required GitHub Secrets:
 
 | Secret | Purpose |
 |--------|---------|
 | `DEPLOY_SSH_KEY` | Private deploy key |
-| `DEPLOY_HOST` | Server hostname |
+| `DEPLOY_HOST` | Tailscale IP or MagicDNS hostname (for example `100.118.169.52`) |
 | `DEPLOY_USER` | SSH user |
+| `TS_OAUTH_CLIENT_ID` | Tailscale OAuth client ID (Trust credentials) for ephemeral CI nodes |
+| `TS_OAUTH_SECRET` | Tailscale OAuth client secret (Trust credentials) |
 
 Actions never overwrites the server `.env` except `IMAGE_TAG`. Prisma migrations
 run via the one-shot `migrate` compose service (`prisma migrate deploy`).

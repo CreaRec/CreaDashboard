@@ -29,6 +29,8 @@ test('CI installs Node 24 and uses Node 24-compatible actions', () => {
   assert.match(workflow, /uses:\s*docker\/setup-buildx-action@v4/);
   assert.match(workflow, /uses:\s*docker\/login-action@v4/);
   assert.match(workflow, /uses:\s*docker\/build-push-action@v7/);
+  assert.match(workflow, /tailscale\/github-action/);
+  assert.match(workflow, /tag:ci/);
   assert.doesNotMatch(workflow, /node-version:\s*"22"/);
 });
 
